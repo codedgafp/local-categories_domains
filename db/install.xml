@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/categories_domains/db" VERSION="20150717" COMMENT="XMLDB file for Moodle categories domains local"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+    <TABLES>
+        <TABLE NAME="course_categories_domains" COMMENT="table mdl_course_categories_domains">
+            <FIELDS>
+                <FIELD NAME="domain_name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT=""/>
+                <FIELD NAME="course_categories_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT=""/>
+                <FIELD NAME="created_at" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT=""/>
+                <FIELD NAME="disabled_at" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT=""/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="domain_name, course_categories_id" COMMENT=""/>
+                <KEY NAME="fk_course_categories" TYPE="foreign" FIELDS="course_categories_id" REFTABLE="course_categories" REFFIELDS="id" COMMENT=""/>
+            </KEYS>
+        </TABLE>
+    </TABLES>
+</XMLDB>
