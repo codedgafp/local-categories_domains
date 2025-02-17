@@ -14,4 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+$string['pluginname'] = 'Categories domains';
+$string['categoriesdomainstitle'] = 'Gestion des noms de domaines';
+$string['domainsassociated']= 'Noms de domaines associés';
+$string['domain_names']= 'Noms de domaines';
+$string['actions']= 'Actions';
+$string['nopermissions'] = 'Vous n’avez pas les les permissions requises pour accéder à cette page';
+
 
