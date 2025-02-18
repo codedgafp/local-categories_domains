@@ -21,3 +21,10 @@ $string['domain_names']= 'Noms de domaines';
 $string['actions']= 'Actions';
 $string['nopermissions'] = 'Vous n\'avez pas les les permissions requises pour accéder à cette page';
 $string['langfile'] = 'French';
+$string['add_domain'] = 'Ajouter un domaine';
+$string['domain_name'] = 'Nom du domaine';
+$string['cancel'] = 'Annuler';
+$string['confirm'] = 'Confirmer';
+$string['requiredfield'] = 'Le champ marqué d\'un * est obligatoire';
+
+

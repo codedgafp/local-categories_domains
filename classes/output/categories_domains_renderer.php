@@ -34,6 +34,7 @@ class categories_domains_renderer extends \plugin_renderer_base {
         $params = array();
         $params['can_manage_domains'] = is_siteadmin();
         $params['url'] = new moodle_url('/local/categories_domains/index.php?entityid=' . $entityid);
+        $params['entityid'] = $entityid;
         return $this->render_from_template('local_categories_domains/manage_domains_button', $params);
     }
 
@@ -43,18 +44,23 @@ class categories_domains_renderer extends \plugin_renderer_base {
      * @return bool|string
      */
     public function render_manage_domains(): bool|string {
+
         $entityid = required_param('entityid', PARAM_INT);
+
+        $this->page->requires->strings_for_js([
+            'langfile',
+            'add_domain',
+            'cancel',
+            'confirm',
+            'requiredfield'
+        ], 'local_categories_domains');
+        
         $this->page->requires->js_call_amd(
             'local_categories_domains/categories_domains',
             'init',
             ['entityid' => $entityid]
         );
-
-        $this->page->requires->strings_for_js(
-            ['langfile'],
-            'local_categories_domains'
-        );
-
+        
         return $this->output->render_from_template('local_categories_domains/manage_domains', []);
     }
 
