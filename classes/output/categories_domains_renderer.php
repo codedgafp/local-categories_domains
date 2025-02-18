@@ -39,8 +39,8 @@ class categories_domains_renderer extends \plugin_renderer_base {
 
     // Render the manage domains page
     public function render_manage_domains() {
-               
-        return $this->output->render_from_template('local_categories_domains/manage_domains', []);
+        $this->page->requires->js_call_amd('local_categories_domains/local_categories_domains', 'init');
+            return $this->output->render_from_template('local_categories_domains/manage_domains', []);
     }
 
 }
