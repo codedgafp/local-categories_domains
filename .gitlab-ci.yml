@@ -1,0 +1,11 @@
+stages:
+  - test-submodule
+  - trigger-mentor-plugins
+
+include:
+  - component: $CI_SERVER_FQDN/devops/cicd/gitlab-ci-toolkit/mentor-submodule-test@1.12.5
+    inputs:
+      submodule_branch: $CI_COMMIT_REF_NAME
+      submodule_path: "local/categories_domains"
+      submodule_testsuite: "mentor_local_categories_domains_testsuite"
+  - component: $CI_SERVER_FQDN/devops/cicd/gitlab-ci-toolkit/mentor-submodules-deploy@1.12.5

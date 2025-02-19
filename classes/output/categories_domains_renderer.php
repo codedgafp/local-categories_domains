@@ -37,11 +37,25 @@ class categories_domains_renderer extends \plugin_renderer_base {
         return $this->render_from_template('local_categories_domains/manage_domains_button', $params);
     }
 
-    // Render the manage domains page
-    public function render_manage_domains() {
-        $this->page->requires->js_call_amd('local_categories_domains/local_categories_domains', 'init');
-            return $this->output->render_from_template('local_categories_domains/manage_domains', []);
+    /**
+     * Render the manage domains main page
+     * 
+     * @return bool|string
+     */
+    public function render_manage_domains(): bool|string {
+        $entityid = required_param('entityid', PARAM_INT);
+        $this->page->requires->js_call_amd(
+            'local_categories_domains/categories_domains',
+            'init',
+            ['entityid' => $entityid]
+        );
+
+        $this->page->requires->strings_for_js(
+            ['langfile'],
+            'local_categories_domains'
+        );
+
+        return $this->output->render_from_template('local_categories_domains/manage_domains', []);
     }
 
 }
-

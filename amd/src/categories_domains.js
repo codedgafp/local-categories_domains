@@ -13,40 +13,38 @@ define([
         /**
          * Create domains DataTable                 
          */
-        init: function () {
-            this.createDomainsTable();
+        init: function (entityid) {
+            this.createDomainsTable(entityid);
         },
         /**
          * Initial domains table
+         * 
+         * @param {int} entityid
          */
-        createDomainsTable: function () {
-            var that = this;
+        createDomainsTable: function (entityid) {
             //table course edadmin user admin
             M.table = $('#domains-table').DataTable({
-                // TO DO ! Add ajax call to get data from server
-                /* ajax: {
+                dom: 'Blfrtip',
+                serverSide: true,
+                info: false,
+                paging: false,
+                ajax: {
                     //Call data members cohort
-                    url: M.cfg.wwwroot  , // + TODO : add ajax file path and remove the comment !
+                    url: M.cfg.wwwroot + '/local/categories_domains/ajax/ajax.php',
                     data: function (d) {// GET HTTP data setting
-                        d.controller = 'test'; // + TODO : add controler and remove the comment !
-                        d.action = 'test'; // + TODO : add action and remove the comment !
+                        d.controller = 'categories_domains';
+                        d.action = 'get_categories_domains';
                         d.format = 'json';
-                    },
-                    dataSrc: 'message'
-                },*/
+                        d.entityid = entityid;
+                    }
+                },
                 oLanguage: {
                     sUrl: M.cfg.wwwroot + '/local/mentor_core/datatables/lang/' + M.util.get_string('langfile', 'local_categories_domains') + ".json"
                 },
                 columns: [
-                    {data: 'name'},
+                    {data: 'domain_name'},
                     {data: 'actions'},
-                    
                 ],
-                //To create header buttons
-                dom: 'Bfrtip',
-                //Header buttons
-                buttons: [
-                ]
             });
         }
     };

@@ -19,6 +19,5 @@ $string['categoriesdomainstitle'] = 'Gestion des noms de domaines';
 $string['domainsassociated']= 'Noms de domaines associés';
 $string['domain_names']= 'Noms de domaines';
 $string['actions']= 'Actions';
-$string['nopermissions'] = 'Vous n’avez pas les les permissions requises pour accéder à cette page';
-
-
+$string['nopermissions'] = 'Vous n\'avez pas les les permissions requises pour accéder à cette page';
+$string['langfile'] = 'French';
