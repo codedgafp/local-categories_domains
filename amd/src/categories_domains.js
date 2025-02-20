@@ -28,6 +28,7 @@ define([
          * @param {int} entityid
          */
         createDomainsTable: function (entityid) {
+            var that = this;
             //table course edadmin user admin
             M.table = $('#domains-table').DataTable({
                 dom: 'Blfrtip',
