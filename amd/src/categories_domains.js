@@ -25,7 +25,6 @@ define([
             $('#add_domain').on('click', function () {
                 this.addDomainPopup();
             });
-            
         },
         /**
          * Initial domains table
@@ -56,7 +55,18 @@ define([
                 },
                 columns: [
                     {data: 'domain_name'},
-                    {data: 'actions'},
+                    {
+                        data: 'actions',
+                        className: 'domains-table-actions',     
+
+                        render: function (data, type, row, meta) {
+                            if (data) {
+                                return data;
+                            }
+                           return '';
+                        }
+
+                    },
                 ],
                 //To create header buttons
                 dom: 'Bfrtip',
@@ -82,7 +92,8 @@ define([
                             return null; //TO DO                        
                     }
             },
-                ] : [],
+                ]
+                : [],
             });
         },
 
@@ -150,7 +161,57 @@ define([
                     $(this).dialog("destroy");
                 },
             });
-        }
+        },
+
+        deleteDomainPopup: function (domain_name) { console.log(domain_name);
+            mentor.dialog('<p>'+M.util.get_string('delete_domain_confirmation_text', 'local_categories_domains',domain_name)+'</p>', {
+                 width: 600,
+                 title: M.util.get_string('delete_domain', 'local_categories_domains'),
+                 buttons: [
+                     {
+                         text: M.util.get_string('confirm', 'local_categories_domains'),
+                         id: 'confirm-delete-domain',
+                         class: "btn-primary",
+                         click: function (e) { 
+                             let that =  $(this);
+                             let entityid = new URLSearchParams(window.location.search).get('entityid');
+                                if(entityid) {
+                                 format_edadmin.ajax_call({
+                                     url: M.cfg.wwwroot + '/local/categories_domains/ajax/ajax.php',
+                                     controller: 'categories_domains', 
+                                     action: 'delete_categorie_domain',
+                                     format: 'json',
+                                     entityid: entityid,
+                                     domainname: domain_name,
+                                     callback: function (response) {
+                                         response = JSON.parse(response);
+                                         if (response === true) {
+                                            that.dialog("destroy");
+                                             M.table.ajax.reload();   
+                                         }else{
+                                            format_edadmin.error_modal(response);
+                                         }
+                                     }
+                                 });
+                                }
+                         }
+                     },
+                     {
+                         // Cancel button
+                         text: M.util.get_string('cancel', 'local_categories_domains'),
+                         class: "btn-secondary",
+                         click: function () {
+                             //Just close the modal
+                             $(this).dialog("destroy");
+                         }
+                     }
+                 ],
+                 close: function () {
+                     //Just close the modal
+                     $(this).dialog("destroy");
+                 },
+             });
+         }
     };
 
     //add object to window to be called outside require

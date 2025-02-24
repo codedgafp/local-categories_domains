@@ -38,6 +38,39 @@ class categories_domains_repository
 
         return $DB->get_records_sql($sql, $params);
     }
+
+    /**
+     * Delete a domain => disable it
+     *  
+     * @param int $coursecategoryid
+     * @param string $domain_name
+     * 
+     * @return bool
+     * @throws \moodle_exception
+     */
+    public function delete_domain(int $coursecategoryid,string  $domain_name): bool
+    {
+        global $DB;
+
+        $sql = "UPDATE {course_categories_domains}
+                SET disabled_at = :disabled_at
+                WHERE course_categories_id = :coursecategoryid 
+                  AND domain_name = :domain_name
+                ";
+
+        $params["coursecategoryid"] = $coursecategoryid;
+        $params["disabled_at"] = time();
+        $params["domain_name"] = $domain_name;
+
+        try {
+            return $DB->execute($sql, $params);
+        } catch (\dml_exception $e) {
+            throw new \moodle_exception('errordeletingdomain', 'local_categories_domains', '', $e->getMessage());
+        }
+    }
+
+
+
     
     /**
      * Check if the user is authorized to access the list of domains.

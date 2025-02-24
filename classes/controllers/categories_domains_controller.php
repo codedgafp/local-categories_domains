@@ -8,6 +8,8 @@
 namespace local_categories_domains;
 
 use local_categories_domains\controller_base;
+use \renderer_base;
+use \context_system;
 use local_categories_domains\domain_name;
 
 defined('MOODLE_INTERNAL') || die();
@@ -25,6 +27,11 @@ class categories_domains_controller extends controller_base
      */
     public function get_categories_domains(): array
     {
+        global $PAGE;
+        
+        $context = context_system::instance();
+        // Set context.
+        $PAGE->set_context($context);
         $entityid = $this->get_param('entityid', PARAM_INT);
 
         if (empty($entityid)) {
@@ -34,16 +41,39 @@ class categories_domains_controller extends controller_base
         $domainsbycategory = categories_domains_repository::get_active_domains_by_category($entityid);
 
         $tablearray = [];
-
+        $categoriesDomainsRenderer = $PAGE->get_renderer('local_categories_domains', 'categories_domains');
         foreach ($domainsbycategory as $domain) {
             $tablearray['data'][] = [
-                'domain_name' => $domain->domain_name, 
-                'actions' => []
+                'domain_name' => $domain->domain_name,
+                
+                'actions' => $categoriesDomainsRenderer->render_action_buttons($domain->domain_name)
             ];
         }
 
         return $tablearray;
     }
+
+
+    /**
+     * Delete a domain => disable it
+     * 
+     * @return bool
+     */
+    public function delete_categorie_domain(): bool
+    {
+        $repo = new categories_domains_repository();
+
+        $entityid = $this->get_param('entityid', PARAM_INT);
+        $domain_name = $this->get_param('domainname', PARAM_TEXT);
+
+        if (empty($entityid)) {
+            throw new \moodle_exception('entityidnotset', 'error');
+        }
+
+        return  $repo->delete_domain($entityid, $domain_name);
+   
+    }
+
 
     /**
      * Add a new domain for a category

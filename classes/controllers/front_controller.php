@@ -171,7 +171,7 @@ class front_controller
      * @return array
      * @throws request_exception | webservice_access_exception | moodle_exception
      */
-    public function run(): array | stdClass
+    public function run(): array | stdClass | bool
     {
         /** @var string $class */
         $class = $this->namespace . $this->controller;
