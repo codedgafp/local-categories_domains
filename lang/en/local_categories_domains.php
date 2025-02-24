@@ -26,5 +26,7 @@ $string['domain_name'] = 'Nom du domaine';
 $string['cancel'] = 'Annuler';
 $string['confirm'] = 'Confirmer';
 $string['requiredfield'] = 'Le champ marqué d\'un * est obligatoire';
-
+$string['delete_domain'] = 'Suppression d\'un domaine';
+$string['delete_domain_confirmation_text'] = 'Attention ! Vous êtes sur le point de supprimer le domaine {$domain_name}.Confirmerez-vous la suppression ?';
+$string['delete'] = 'Supprimer';
 
