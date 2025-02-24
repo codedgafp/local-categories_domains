@@ -71,8 +71,18 @@ define([
                         action: function () {                           
                                 that.addDomainPopup();                            
                         }
-                    }] : [],
-                
+                },
+                {
+                    text: M.util.get_string('import_csv_domain', 'local_categories_domains'),
+                    className: 'btn btn-primary',
+                    attr: {
+                        id: 'import_csv_domain',
+                    },
+                    action: function () {                           
+                            return null; //TO DO                        
+                    }
+            },
+                ] : [],
             });
         },
 

@@ -54,7 +54,8 @@ class categories_domains_renderer extends \plugin_renderer_base {
             'add_domain',
             'cancel',
             'confirm',
-            'requiredfield'
+            'requiredfield',
+            'import_csv_domain'
         ], 'local_categories_domains');
         
         $this->page->requires->js_call_amd(
