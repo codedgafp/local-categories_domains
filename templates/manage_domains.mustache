@@ -3,8 +3,10 @@
 <table id="domains-table" class="dataTable no-footer">
     <thead>
     <tr>
-        <th>{{# str }} domain_names, local_categories_domains {{/ str }}</th>       
-        <th>{{# str }} actions, local_categories_domains {{/ str }}</th>       
+        <th>{{# str }} domain_names, local_categories_domains {{/ str }}</th>   
+    {{# user_can_manage_domains }}
+        <th>{{# str }} actions, local_categories_domains {{/ str }}</th>
+    {{/ user_can_manage_domains }}  
     </tr>
     </thead>   
 </table>

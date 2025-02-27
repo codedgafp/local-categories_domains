@@ -18,6 +18,7 @@ namespace local_categories_domains\output;
 
 defined('MOODLE_INTERNAL') || die();
 
+use local_categories_domains\categories_domains_repository;
 use moodle_url;
 
 class categories_domains_renderer extends \plugin_renderer_base {
@@ -31,8 +32,7 @@ class categories_domains_renderer extends \plugin_renderer_base {
      */       
     public function render_manage_domains_button($entityid) {
      // Initialize params
-        $params = array();
-        $params['can_manage_domains'] = is_siteadmin();
+        $params = array();        
         $params['url'] = new moodle_url('/local/categories_domains/index.php?entityid=' . $entityid);
         $params['entityid'] = $entityid;
         return $this->render_from_template('local_categories_domains/manage_domains_button', $params);
@@ -44,8 +44,10 @@ class categories_domains_renderer extends \plugin_renderer_base {
      * @return bool|string
      */
     public function render_manage_domains(): bool|string {
-
+        global $USER;
+        
         $entityid = required_param('entityid', PARAM_INT);
+        $user_can_manage_domains = categories_domains_repository::admindedie_can_manage_domains($entityid)  || is_siteadmin($USER);
 
         $this->page->requires->strings_for_js([
             'langfile',
@@ -58,10 +60,11 @@ class categories_domains_renderer extends \plugin_renderer_base {
         $this->page->requires->js_call_amd(
             'local_categories_domains/categories_domains',
             'init',
-            ['entityid' => $entityid]
+            ['entityid' => $entityid,
+            'user_can_manage_domains' => $user_can_manage_domains]
         );
         
-        return $this->output->render_from_template('local_categories_domains/manage_domains', []);
+        return $this->output->render_from_template('local_categories_domains/manage_domains', ["user_can_manage_domains" => $user_can_manage_domains]);
     }
 
 }

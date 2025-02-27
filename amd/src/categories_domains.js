@@ -15,8 +15,8 @@ define([
         /**
          * Create domains DataTable                 
          */
-        init: function (entityid) {
-            this.createDomainsTable(entityid);
+        init: function (entityid,user_can_manage_domains) {
+            this.createDomainsTable(entityid,user_can_manage_domains);
             $('#add_domain').on('click', function () {
                 this.addDomainPopup();
             });
@@ -27,7 +27,8 @@ define([
          * 
          * @param {int} entityid
          */
-        createDomainsTable: function (entityid) {
+        createDomainsTable: function (entityid,user_can_manage_domains) {
+
             var that = this;
             //table course edadmin user admin
             M.table = $('#domains-table').DataTable({
@@ -55,8 +56,8 @@ define([
                 //To create header buttons
                 dom: 'Bfrtip',
                 //Header buttons
-                buttons: [
-                    {
+                buttons: user_can_manage_domains ? 
+                    [{
                         text: M.util.get_string('add_domain', 'local_categories_domains'),
                         className: 'btn btn-primary',
                         attr: {
@@ -65,8 +66,8 @@ define([
                         action: function () {                           
                                 that.addDomainPopup();                            
                         }
-                },
-                ]
+                    }] : [],
+                
             });
         },
 
