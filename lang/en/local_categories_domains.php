@@ -29,4 +29,9 @@ $string['requiredfield'] = 'Le champ marqué d\'un * est obligatoire';
 $string['delete_domain'] = 'Suppression d\'un domaine';
 $string['delete_domain_confirmation_text'] = 'Attention ! Vous êtes sur le point de supprimer le domaine {$domain_name}.Confirmerez-vous la suppression ?';
 $string['delete'] = 'Supprimer';
-
+// Add domain name
+$string['requiredfield'] = 'Le champ marqué d\'un * est obligatoire';
+$string['domainnotwhitelisted'] = 'Ce domaine n\'appartient pas à la liste blanche';
+$string['domainexists'] = 'Le nom de domaine est déjà rattaché à l\'espace dédié';
+$string['erroraddingdomain'] = 'Erreur lors de l\'ajout du domaine';
+$string['entityidnotset'] = 'L\'id de l\'entité n\'est pas défini';

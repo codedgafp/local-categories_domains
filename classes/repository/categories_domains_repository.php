@@ -10,8 +10,20 @@ namespace local_categories_domains;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once "$CFG->dirroot/local/categories_domains/classes/model/domain_name.php";
+
 class categories_domains_repository
 {
+    /**
+     * @var \moodle_database
+     */
+    protected $db;
+
+    public function __construct() {
+        global $DB;
+        $this->db = $DB;
+    }
+    
     public static function get_active_domains_by_category(int $coursecategoryid): array
     {
         global $DB;
@@ -45,4 +57,33 @@ class categories_domains_repository
 
         return !( $ismainentity && $coursecategoryid == $usermainentity->id && $usermainentity->is_manager($USER));
     }
+
+
+    /**
+     * Check if the domain already exists for the same entity
+     * 
+     * @param domain_name $domain The domain name to check
+     * @return bool True if domain exists
+     */
+    public function is_domain_exists(domain_name $domain): bool
+    {
+            return $this->db->record_exists_sql(
+                "SELECT 1 FROM {course_categories_domains} 
+                WHERE domain_name = :domainname
+                AND course_categories_id = :entity
+                AND disabled_at IS NULL",
+                ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
+            );
+    }
+
+    /**
+     * Insert domain name into database
+     * @param domain_name $domain The domain name to check
+     * @return bool
+     */
+    public function add_domain(domain_name $domain){
+        return $this->db->insert_record_raw('course_categories_domains', $domain, false);
+    }
+
+
 }

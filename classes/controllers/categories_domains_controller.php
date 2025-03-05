@@ -8,6 +8,7 @@
 namespace local_categories_domains;
 
 use local_categories_domains\controller_base;
+use local_categories_domains\domain_name;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -43,4 +44,47 @@ class categories_domains_controller extends controller_base
 
         return $tablearray;
     }
+
+    /**
+     * Add a new domain for a category
+     * @return array JSON response
+     */
+    public function add_domain(): array
+    {
+        $repo = new categories_domains_repository();
+        
+        $entityid = $this->get_param('entityid', PARAM_INT);
+        $name = $this->get_param('domainname', PARAM_TEXT);
+
+        if (empty($entityid)) {
+            return ['status' => false, 'message' => get_string('entityidnotset', 'local_categories_domains')];
+        }
+
+        if (empty($name) || trim($name) === '') {
+            return ['status' => false, 'message' => get_string('requiredfield', 'local_categories_domains')];
+        }
+
+        try {
+            $domain = new domain_name();
+            $domain->domain_name = trim(strtolower($name));
+            $domain->course_categories_id = $entityid;
+
+            // Check if domain is in whitelist
+            if (!$domain->is_whitelisted()) {
+                return ['status' => false, 'message' => get_string('domainnotwhitelisted', 'local_categories_domains')];
+            }
+            
+            // Check if domain already exists for main entity
+            if ($domain->is_exist()) {
+                return ['status' => false, 'message' => get_string('domainexists', 'local_categories_domains')];
+            }
+            
+            $result = $repo->add_domain($domain);
+            return ['status' => true, 'message' => $result];
+        
+        } catch (\Exception $e) {
+            return ['status' => false, 'message' => get_string('erroraddingdomain', 'local_categories_domains')];
+        }
+    }
+    
 }

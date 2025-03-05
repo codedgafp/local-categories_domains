@@ -16,6 +16,11 @@ define([
          * Create domains DataTable                 
          */
         init: function (entityid,user_can_manage_domains) {
+            $('#domain-add-form').on('submit', function(e) {
+                e.preventDefault();
+                return false;
+            });
+
             this.createDomainsTable(entityid,user_can_manage_domains);
             $('#add_domain').on('click', function () {
                 this.addDomainPopup();
@@ -85,7 +90,8 @@ define([
 
                             var that = $(this);
                             var dataFrom = $('#domain-add-form').serializeArray();
-                            var entityid = $('#adddomains').attr('data-entity-id');
+                            var urlParams = new URLSearchParams(window.location.search);
+                            var entityid = urlParams.get('entityid') || 0; 
                             
                              // Check if domain name data is not empty.
                             if (dataFrom[0].value.trim() === '' ) {
@@ -95,8 +101,8 @@ define([
 
                                 format_edadmin.ajax_call({
                                     url: M.cfg.wwwroot + '/local/categories_domains/ajax/ajax.php',
-                                    controller: 'test', //TO DO : add controller and remove the comment !
-                                    action: 'test',//TO DO : add method and remove the comment !
+                                    controller: 'categories_domains',
+                                    action: 'add_domain',
                                     format: 'json',
                                     entityid: entityid,
                                     domainname: dataFrom[0].value,
@@ -108,7 +114,7 @@ define([
                                             $('#domain-add-form')[0].reset();
                                             that.dialog("destroy");
                                         } else {
-                                            $('.domain-add-form-warning').removeClass(warningMessageDisplayClass).html(warningMessage);
+                                            $('.domain-add-form-warning').removeClass(warningMessageDisplayClass).html(response.message);
                                         }
                                     }
                                 });

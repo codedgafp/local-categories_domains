@@ -6,17 +6,19 @@
  */
 
 use \local_categories_domains\categories_domains_repository;
+use \local_categories_domains\domain_name;
 
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
+require_once "$CFG->dirroot/local/categories_domains/classes/model/domain_name.php";
 
 class local_categories_domains_repository_testcase extends advanced_testcase
 {
     private $db;
-    private $categoriesDomainsRepository;
+    private categories_domains_repository $categoriesDomainsRepository;
 
     /**
      * Setup test
@@ -25,6 +27,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         parent::setUp();
 
         $this->resetAfterTest();
+        $this->categoriesDomainsRepository = new categories_domains_repository();
 
         global $DB;
         $this->db = $DB;
@@ -116,4 +119,96 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $this->resetAllData();
     }
+
+    /**
+     * Test add domain name ok
+     */
+    public function test_successful_domain_addition_ok() {
+        global $DB;
+        
+        $category = $this->getDataGenerator()->create_category();
+        
+        $repo = $this->categoriesDomainsRepository;
+        
+        $domain = new domain_name();
+        $domain->domain_name = 'test.com';
+        $domain->course_categories_id = $category->id;
+        
+        $result = $repo->add_domain($domain);
+        
+        $this->assertTrue($result);
+        
+        $domains = $DB->get_records('course_categories_domains', [
+            'course_categories_id' => $category->id,
+            'domain_name' => 'test.com'
+        ]);
+        
+        $this->assertCount(1, $domains);
+    }
+
+    /**
+     * Test domain existence True
+     */
+    public function test_domain_existence_true() {
+        $category = $this->getDataGenerator()->create_category();
+        
+        $repo = $this->categoriesDomainsRepository;
+
+        $domain = new domain_name();
+        $domain->domain_name = 'test.com';
+        $domain->course_categories_id = $category->id;
+        
+        $repo->add_domain($domain);
+        
+        $exists = $repo->is_domain_exists($domain);
+        
+        $this->assertTrue($exists);
+    }
+
+    /**
+     * Test domain existence False
+     */
+    public function test_domain_existence_false() {
+        $this->resetAfterTest();
+        
+        $category = $this->getDataGenerator()->create_category();
+        
+        $repo = $this->categoriesDomainsRepository;
+
+        $domain = new domain_name();
+        $domain->domain_name = 'test_does_not_exist.com';
+        $domain->course_categories_id = $category->id;
+        
+        $exists = $repo->is_domain_exists($domain);
+        
+        $this->assertFalse($exists);
+        
+        
+    }
+
+    /**
+     * Test domain whitelisting
+     */
+    public function test_domain_whitelisting() {
+        global $CFG;
+        
+        $CFG->allowemailaddresses = 'test.com example.com .subdomain.com';
+        
+        $domain1 = new domain_name();
+        $domain1->domain_name = 'test.com';
+        $this->assertTrue($domain1->is_whitelisted());
+        
+        $domain2 = new domain_name();
+        $domain2->domain_name = 'sub.subdomain.com';
+        $this->assertTrue($domain2->is_whitelisted());
+        
+        $domain3 = new domain_name();
+        $domain3->domain_name = 'notwhitelisted.com';
+        $this->assertFalse($domain3->is_whitelisted());
+
+        $domain4 = new domain_name();
+        $domain4->domain_name = 'subdomain.com.com';
+        $this->assertFalse($domain4->is_whitelisted());
+    }
+
 }
