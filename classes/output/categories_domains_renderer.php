@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
 
 use local_categories_domains\categories_domains_repository;
 use moodle_url;
+use local_mentor_core\entity_api;
+require_once($CFG->dirroot . '/local/mentor_core/api/entity.php');
 
 class categories_domains_renderer extends \plugin_renderer_base {
     
@@ -31,10 +33,13 @@ class categories_domains_renderer extends \plugin_renderer_base {
      * @throws \moodle_exception
      */       
     public function render_manage_domains_button($entityid) {
+        global $USER;
      // Initialize params
         $params = array();        
         $params['url'] = new moodle_url('/local/categories_domains/index.php?entityid=' . $entityid);
         $params['entityid'] = $entityid;
+        $repository = new categories_domains_repository();
+        $params['user_can_manage_domains'] = $repository->admindedie_can_manage_domains($entityid) || is_siteadmin($USER);
         return $this->render_from_template('local_categories_domains/manage_domains_button', $params);
     }
 
@@ -47,7 +52,9 @@ class categories_domains_renderer extends \plugin_renderer_base {
         global $USER;
         
         $entityid = required_param('entityid', PARAM_INT);
-        $user_can_manage_domains = categories_domains_repository::admindedie_can_manage_domains($entityid)  || is_siteadmin($USER);
+        //admindeidie cannot manage domains only siteadmin
+        $repository = new categories_domains_repository();
+        $user_can_manage_domains = !$repository->admindedie_can_manage_domains($entityid)  || is_siteadmin($USER);
 
         $this->page->requires->strings_for_js([
             'langfile',
@@ -67,8 +74,39 @@ class categories_domains_renderer extends \plugin_renderer_base {
             ['entityid' => $entityid,
             'user_can_manage_domains' => $user_can_manage_domains]
         );
-        
+        echo $this->render_entity_selector($entityid);
         return $this->output->render_from_template('local_categories_domains/manage_domains', ["user_can_manage_domains" => $user_can_manage_domains]);
+    }
+
+    public function render_entity_selector($entityid) {
+        global $USER, $PAGE;
+
+        // Get managed entities if user has any.
+        $managedentities = entity_api::get_managed_entities($USER);
+
+        if (count($managedentities) <= 1) {
+            return '';
+        }
+
+        // Create an entity selector if it manages several entities.
+        $data = new \stdClass();
+        $data->switchentities = [];
+
+        foreach ($managedentities as $managedentity) {
+
+            if (!$managedentity->is_main_entity()) {
+                continue;
+            }
+            $entitydata = new \stdClass();
+            $entitydata->name = $managedentity->shortname;
+            $entitydata->link =  new moodle_url('/local/categories_domains/index.php', ['entityid' => $managedentity->id]);
+            $entitydata->selected = $entityid == $managedentity->id;
+            $data->switchentities[] = $entitydata;
+        }
+        // Call template.
+        $PAGE->requires->string_for_js('pleaserefresh', 'format_edadmin');
+        $PAGE->requires->js_call_amd('format_edadmin/format_edadmin', 'selectEntity');
+        return $this->render_from_template('format_edadmin/entity_select', $data);
     }
 
     public function render_action_buttons(string $domain_name): string

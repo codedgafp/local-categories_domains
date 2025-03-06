@@ -53,21 +53,22 @@ define([
                 oLanguage: {
                     sUrl: M.cfg.wwwroot + '/local/mentor_core/datatables/lang/' + M.util.get_string('langfile', 'local_categories_domains') + ".json"
                 },
-                columns: [
-                    {data: 'domain_name'},
-                    {
-                        data: 'actions',
-                        className: 'domains-table-actions',     
-
-                        render: function (data, type, row, meta) {
-                            if (data) {
-                                return data;
+                columns: user_can_manage_domains ? 
+                    [
+                        {data: 'domain_name'},
+                        {
+                            data: 'actions',
+                            className: 'domains-table-actions',     
+    
+                            render: function (data, type, row, meta) {
+                                if (data) {
+                                    return data;
+                                }
+                               return '';
                             }
-                           return '';
-                        }
-
-                    },
-                ],
+    
+                        },
+                    ] : [{data: 'domain_name'}],              
                 //To create header buttons
                 dom: 'Bfrtip',
                 //Header buttons

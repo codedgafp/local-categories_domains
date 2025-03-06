@@ -73,22 +73,18 @@ class categories_domains_repository
 
     
     /**
-     * Check if the user is authorized to access the list of domains.
+     * Check if the user is authorized to manage domains.
      * 
      * @param int $coursecategoryid
      */
-    public static function admindedie_can_manage_domains(int $coursecategoryid): bool
+    public function admindedie_can_manage_domains(int $coursecategoryid): bool
     {
         global $USER;
-        // Get user's main entity.
-        $usermainentity = \local_mentor_core\profile_api::get_user_main_entity($USER->id);        
-
+        
         $currententity = \local_mentor_core\entity_api::get_entity($coursecategoryid);
         $ismainentity = $currententity->is_main_entity();
-        // Check if user is authorized to access the list of domains. 
-        // User must be a manager of the current main entity that it must be  his main entity .
-
-        return !( $ismainentity && $coursecategoryid == $usermainentity->id && $usermainentity->is_manager($USER));
+       // User must be a manager of the current main entity
+        return  $ismainentity &&  $currententity->is_manager($USER);
     }
 
 
