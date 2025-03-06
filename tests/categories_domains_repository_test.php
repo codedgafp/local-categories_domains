@@ -482,6 +482,35 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
 
     /**
+     * Test get active domains by search value
+     */
+    public function test_get_active_domains_by_serach_value() {
+        $category = $this->getDataGenerator()->create_category();
+        
+        $domain1 = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'domain1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $domain2 = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'domain2.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        
+        $this->db->insert_record('course_categories_domains', $domain1, false);
+        $this->db->insert_record('course_categories_domains', $domain2, false);
+
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id, 'domain1');
+
+        $this->assertCount(1, $result);
+        $this->assertTrue(in_array('domain1.com', array_column($result, 'domain_name')));
+        $this->assertFalse(in_array('domain2.com', array_column($result, 'domain_name')));
+    }
+
+    /**
      * Test get all domains
      *
      * @throws ReflectionException

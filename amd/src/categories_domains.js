@@ -48,6 +48,7 @@ define([
                         d.action = 'get_categories_domains';
                         d.format = 'json';
                         d.entityid = entityid;
+                        d.search = d.search.value;
                     }
                 },
                 oLanguage: {

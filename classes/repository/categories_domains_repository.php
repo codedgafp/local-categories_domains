@@ -32,18 +32,51 @@ class categories_domains_repository
      * @param string $orderdir
      * @return array
      */
-    public function get_active_domains_by_category(int $coursecategoryid, string $orderdir = "DESC", string $orderBy = "created_at"): array
-    {
+     public function get_active_domains_by_category(int $coursecategoryid,string $orderdir = "DESC", string $orderBy = "created_at", ?string $search = null): array
+    {   
         $sql = "SELECT ccd.domain_name
                 FROM {course_categories_domains} ccd
                 WHERE ccd.course_categories_id = :coursecategoryid
                 AND ccd.disabled_at IS NULL
                 ORDER BY ccd.$orderBy $orderdir
                 ";
-
         $params["coursecategoryid"] = $coursecategoryid;
 
+        if (!empty($search) && mb_strlen(trim($search)) > 0) {
+            $sql .= $this->apply_search_conditions($params,$search);          
+        } 
+        
         return $this->db->get_records_sql($sql, $params);
+    }
+    
+    private function apply_search_conditions(array &$params, string $search) : string
+    {
+        $searchvalue = trim($search);
+        $searchvalue = str_replace("&#39;", "\'", $searchvalue);
+
+        // Limit search length
+        if (mb_strlen($searchvalue) > 100) {
+            $searchvalue = mb_substr($searchvalue, 0, 100);
+        }
+        // Add a cleaning param layer 
+        $searchvalue = clean_param($searchvalue, PARAM_TEXT);
+        $listsearchvalue = explode(" ", $searchvalue);
+
+        $searchConditions = [];
+           
+        foreach ($listsearchvalue as $key => $partsearchvalue) {
+           if (!$partsearchvalue) {
+                continue;
+            }
+            $domainSearchConditions = [
+                $this->db->sql_like('ccd.domain_name', ':domainname' . $key, false, false)
+            ];
+            $searchConditions[] = '(' . implode(' OR ', $domainSearchConditions) . ')';
+            $params["domainname".$key] = '%' .  $this->db->sql_like_escape($partsearchvalue) . '%';
+
+        }
+       
+        return (!empty($searchConditions)) ? ' AND (' . implode(' AND ', $searchConditions) . ')' : "";
     }
 
     /**
