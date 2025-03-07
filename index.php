@@ -32,9 +32,10 @@ $PAGE->set_context($context);
 
 // Get entity id.
 $entityid = required_param('entityid', PARAM_INT); 
+$repository = new categories_domains_repository();
 
-
-if (isloggedin() && categories_domains_repository::admindedie_can_manage_domains($entityid)) {
+// Check permissions.
+if (isloggedin() && ( !is_siteadmin($USER) && !($repository->admindedie_can_manage_domains($entityid)) )) {
     redirect($CFG->wwwroot, get_string('nopermissions', 'local_catalog'));
     exit;
 }

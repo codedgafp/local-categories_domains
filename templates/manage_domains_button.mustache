@@ -1,1 +1,3 @@
-    <a id="adddomains" href="{{ url }}" class="dt-button btn btn-primary" data-entity-id="{{entityid}}">{{# str }} domainsassociated, local_categories_domains {{/ str }}</a>
+ {{#user_can_manage_domains}}
+    <a id="managedomains" href="{{ url }}" class="dt-button btn btn-primary" data-entity-id="{{entityid}}">{{# str }} domainsassociated, local_categories_domains {{/ str }}</a>
+{{/user_can_manage_domains}}
