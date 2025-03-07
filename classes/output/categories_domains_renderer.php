@@ -55,7 +55,10 @@ class categories_domains_renderer extends \plugin_renderer_base {
             'cancel',
             'confirm',
             'requiredfield',
-            'import_csv_domain'
+            'import_csv_domain',
+            'delete_domain',
+            'delete_domain_confirmation_text',
+            'delete'
         ], 'local_categories_domains');
         
         $this->page->requires->js_call_amd(
@@ -66,6 +69,17 @@ class categories_domains_renderer extends \plugin_renderer_base {
         );
         
         return $this->output->render_from_template('local_categories_domains/manage_domains', ["user_can_manage_domains" => $user_can_manage_domains]);
+    }
+
+    public function render_action_buttons(string $domain_name): string
+    {
+        $this->page->requires->strings_for_js([
+
+            'delete_domain',
+            'delete_domain_confirmation_text',
+            'delete'
+        ], 'local_categories_domains');
+        return $this->render_from_template('local_categories_domains/delete_domain_button', array('domain_name' => $domain_name));
     }
 
 }

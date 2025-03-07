@@ -6,6 +6,8 @@
  */
 
 use \local_categories_domains\categories_domains_repository;
+
+use function PHPUnit\Framework\assertEquals;
 use \local_categories_domains\domain_name;
 
 defined('MOODLE_INTERNAL') || die();
@@ -118,6 +120,34 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertFalse(in_array('disabled.com', array_column($result, 'domain_name')));
 
         $this->resetAllData();
+    }
+
+    /**
+     * Test deleting a domain
+     *
+     * @throws ReflectionException
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @covers \local_categories_domains\categories_domains_repository::delete_domain
+     */
+    public function test_delete_domain() {
+        $category = $this->getDataGenerator()->create_category();
+        
+        $domain = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'domain.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $this->db->insert_record('course_categories_domains', $domain, false);
+
+        $domainslist = categories_domains_repository::get_active_domains_by_category($category->id);
+        $result = categories_domains_repository::delete_domain( $category->id,$domainslist['domain.com']->domain_name);
+        $this->assertTrue($result);
+
+        $deletedDomain = $this->db->get_record('course_categories_domains', ['domain_name' =>$domainslist['domain.com']->domain_name, 'course_categories_id' => $category->id]);
+       $this->assertEquals($deletedDomain->disabled_at, time());
     }
 
     /**
