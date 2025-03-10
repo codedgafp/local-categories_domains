@@ -143,7 +143,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $domain, false);
 
         $domainslist = categories_domains_repository::get_active_domains_by_category($category->id);
-        $result = categories_domains_repository::delete_domain( $category->id,$domainslist['domain.com']->domain_name);
+        $result = $this->categoriesDomainsRepository->delete_domain($category->id, $domainslist['domain.com']->domain_name);
         $this->assertTrue($result);
 
         $deletedDomain = $this->db->get_record('course_categories_domains', ['domain_name' =>$domainslist['domain.com']->domain_name, 'course_categories_id' => $category->id]);
