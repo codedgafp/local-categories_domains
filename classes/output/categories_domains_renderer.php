@@ -18,9 +18,10 @@ namespace local_categories_domains\output;
 
 defined('MOODLE_INTERNAL') || die();
 
-use local_categories_domains\categories_domains_repository;
-use moodle_url;
+use local_categories_domains\repository\categories_domains_repository;
 use local_mentor_core\entity_api;
+use moodle_url;
+
 require_once($CFG->dirroot . '/local/mentor_core/api/entity.php');
 
 class categories_domains_renderer extends \plugin_renderer_base {

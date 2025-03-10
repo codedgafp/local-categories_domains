@@ -6,11 +6,11 @@
  * @package local_categories_domains
  */
 
-namespace local_categories_domains;
+namespace local_categories_domains\repository;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once "$CFG->dirroot/local/categories_domains/classes/model/domain_name.php";
+use local_categories_domains\model\domain_name;
 
 class categories_domains_repository
 {
@@ -113,6 +113,4 @@ class categories_domains_repository
     public function add_domain(domain_name $domain){
         return $this->db->insert_record_raw('course_categories_domains', $domain, false);
     }
-
-
 }

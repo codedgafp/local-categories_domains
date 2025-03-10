@@ -7,10 +7,9 @@
  * @package local_categories_domains
  */
 
-namespace local_categories_domains;
+namespace local_categories_domains\controllers;
 
-require_once "$CFG->dirroot/local/categories_domains/classes/utils/logger.php";
-
+use \local_categories_domains\utils\logger;
 use moodle_exception;
 use ReflectionClass;
 use ReflectionException;

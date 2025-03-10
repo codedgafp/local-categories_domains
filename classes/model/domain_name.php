@@ -8,14 +8,13 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_categories_domains;
-use \local_categories_domains\categories_domains_repository;
+namespace local_categories_domains\model;
+use \local_categories_domains\repository\categories_domains_repository;
 
 defined('MOODLE_INTERNAL') || die();
 
 class domain_name
 {
-
     public string $domain_name;
 
     public int $course_categories_id;

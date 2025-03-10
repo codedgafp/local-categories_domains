@@ -7,10 +7,9 @@
  */
 
 
-use local_categories_domains\front_controller;
+use local_categories_domains\controllers\front_controller;
 
 require_once __DIR__ . '/../../../config.php';
-require_once "$CFG->dirroot/local/categories_domains/classes/controllers/front_controller.php";
 
 // Require login.
 require_login();
@@ -22,7 +21,7 @@ if (!isloggedin()) {
 
 try {
     // Call front controller.
-    $frontcontroller = new front_controller('categories_domains', 'local_categories_domains\\');
+    $frontcontroller = new front_controller('categories_domains', 'local_categories_domains\\controllers\\');
 
     // Call the controller method, result is json.
     echo json_encode($frontcontroller->run());
