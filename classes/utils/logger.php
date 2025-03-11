@@ -6,11 +6,9 @@
  * @package local_categories_domains
  */
 
-namespace local_categories_domains;
+namespace local_categories_domains\utils;
 
-use request_exception;
-
-require_once "$CFG->dirroot/local/categories_domains/classes/exception/request_exception.php";
+use local_categories_domains\exception\request_exception;
 
 defined('MOODLE_INTERNAL') || die();
 

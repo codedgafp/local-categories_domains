@@ -5,10 +5,8 @@
  * @package local_categories_domains
  */
 
-use \local_categories_domains\categories_domains_repository;
-
-use function PHPUnit\Framework\assertEquals;
-use \local_categories_domains\domain_name;
+use \local_categories_domains\repository\categories_domains_repository;
+use \local_categories_domains\model\domain_name;
 
 defined('MOODLE_INTERNAL') || die();
 

@@ -1,4 +1,3 @@
-
 <?php
 
 /**
@@ -6,6 +5,10 @@
  *
  * @package local_categories_domains
  */
+
+namespace local_categories_domains\exception;
+
+use moodle_exception;
 
 defined('MOODLE_INTERNAL') || die();
 

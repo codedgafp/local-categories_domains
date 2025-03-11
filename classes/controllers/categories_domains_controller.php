@@ -5,18 +5,16 @@
  * @package local_categories_domains
  */
 
-namespace local_categories_domains;
+namespace local_categories_domains\controllers;
 
-use local_categories_domains\controller_base;
-use \renderer_base;
+use local_categories_domains\controllers\controller_base;
+use local_categories_domains\model\domain_name;
+use local_categories_domains\repository\categories_domains_repository;
 use \context_system;
-use local_categories_domains\domain_name;
 
 defined('MOODLE_INTERNAL') || die();
 
 require_once __DIR__ . '/../../../../config.php';
-require_once "$CFG->dirroot/local/categories_domains/classes/controllers/controller_base.php";
-require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
 
 class categories_domains_controller extends controller_base
 {
@@ -103,7 +101,7 @@ class categories_domains_controller extends controller_base
             if (!$domain->is_whitelisted()) {
                 return ['status' => false, 'message' => get_string('domainnotwhitelisted', 'local_categories_domains')];
             }
-            
+
             // Check if domain already exists for main entity
             if ($domain->is_exist()) {
                 return ['status' => false, 'message' => get_string('domainexists', 'local_categories_domains')];
@@ -111,7 +109,6 @@ class categories_domains_controller extends controller_base
             
             $result = $repo->add_domain($domain);
             return ['status' => true, 'message' => $result];
-        
         } catch (\Exception $e) {
             return ['status' => false, 'message' => get_string('erroraddingdomain', 'local_categories_domains')];
         }
