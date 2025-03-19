@@ -58,6 +58,7 @@ class categories_domains_renderer extends \plugin_renderer_base {
         //admindeidie cannot manage domains only siteadmin
         $repository = new categories_domains_repository();
         $user_can_manage_domains = !$repository->admindedie_can_manage_domains($entityid)  || is_siteadmin($USER);
+        $user_is_siteadmin = is_siteadmin($USER);
 
         $this->page->requires->strings_for_js([
             'langfile',
@@ -75,7 +76,8 @@ class categories_domains_renderer extends \plugin_renderer_base {
             'local_categories_domains/categories_domains',
             'init',
             ['entityid' => $entityid,
-            'user_can_manage_domains' => $user_can_manage_domains]
+            'user_can_manage_domains' => $user_can_manage_domains,
+            'user_is_siteadmin' => $user_is_siteadmin]
         );
         echo $this->render_entity_selector($entityid);
         return $this->output->render_from_template('local_categories_domains/manage_domains', ["user_can_manage_domains" => $user_can_manage_domains]);

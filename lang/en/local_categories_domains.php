@@ -38,3 +38,9 @@ $string['domainnotwhitelisted'] = 'Ce domaine n\'appartient pas à la liste blan
 $string['domainexists'] = 'Le nom de domaine est déjà rattaché à l\'espace dédié';
 $string['erroraddingdomain'] = 'Erreur lors de l\'ajout du domaine';
 $string['entityidnotset'] = 'L\'id de l\'entité n\'est pas défini';
+
+$string['importdomains'] = 'Import domaines';
+$string['validate_import'] = 'Valider l\'import';
+
+$string['textexamplecsv'] = 'Attention, cette opération réinitialise toutes les associations domaines / espaces dédiés existantes.
+Il convient donc de télécharger l\'export de ces associations avant de lancer un nouvel import CSV.';

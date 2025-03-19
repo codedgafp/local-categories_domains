@@ -15,13 +15,13 @@ define([
         /**
          * Create domains DataTable                 
          */
-        init: function (entityid,user_can_manage_domains) {
+        init: function (entityid,user_can_manage_domains,user_is_siteadmin) {
             $('#domain-add-form').on('submit', function(e) {
                 e.preventDefault();
                 return false;
             });
 
-            this.createDomainsTable(entityid,user_can_manage_domains);
+            this.createDomainsTable(entityid,user_can_manage_domains,user_is_siteadmin);
             $('#add_domain').on('click', function () {
                 this.addDomainPopup();
             });
@@ -31,7 +31,7 @@ define([
          * 
          * @param {int} entityid
          */
-        createDomainsTable: function (entityid,user_can_manage_domains) {
+        createDomainsTable: function (entityid,user_can_manage_domains,user_is_siteadmin) {
 
             var that = this;
             //table course edadmin user admin
@@ -87,18 +87,16 @@ define([
                         action: function () {                           
                                 that.addDomainPopup();                            
                         }
-                },
-                {
+                }].concat(user_is_siteadmin ? [{
                     text: M.util.get_string('import_csv_domain', 'local_categories_domains'),
                     className: 'btn btn-primary',
                     attr: {
                         id: 'import_csv_domain',
                     },
                     action: function () {                           
-                            return null; //TO DO                        
+                            window.location.href = M.cfg.wwwroot + '/local/categories_domains/pages/importcsv.php?entityid='+entityid;                        
                     }
-            },
-                ]
+                }] : [])
                 : [],
             });
         },
