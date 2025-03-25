@@ -16,11 +16,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-use local_categories_domains\repository\categories_domains_repository;
 
-require_once(__DIR__ . '/../../config.php');
+require_once('../../config.php');
 require_once($CFG->dirroot . '/local/mentor_core/lib.php');
 
+use local_categories_domains\repository\categories_domains_repository;
 $context = context_system::instance();
 $site = get_site();
 

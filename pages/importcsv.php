@@ -1,12 +1,13 @@
 <?php
 
+require_once('../../../config.php');
 
 use local_categories_domains\forms\importdomainscsv_form;
 
-require_once('../../../config.php');
 require_once($CFG->dirroot . '/local/mentor_core/lib.php');
 
 require_once($CFG->dirroot . '/local/categories_domains/forms/importdomainscsv_form.php');
+require_once($CFG->dirroot . '/local/categories_domains/lib.php');
 
 // Require login.
 require_login();
@@ -15,7 +16,7 @@ require_login();
 $entityid = required_param('entityid', PARAM_INT);
 
 // Check permissions.
-if ( !is_siteadmin($USER)) {
+if (!is_siteadmin($USER)) {
     redirect($CFG->wwwroot, get_string('nopermissions', 'local_catalog'));
     exit;
 }
@@ -55,14 +56,29 @@ $out = '';
 echo $OUTPUT->header();
 echo $OUTPUT->heading($title);
 
-// Anchor directly to the import report.
-$anchorurl = new moodle_url('/local/categories_domains/pages/importcsv.php', ['entityid' => $entityid], 'import-reports');
-
 // Import CSV form.
-$csvmform = new importdomainscsv_form($anchorurl->out(), ['entityid' => $entityid]);
+$csvmform = new importdomainscsv_form($url->out(), ['entityid' => $entityid]);
 $csvformdata = $csvmform->get_data();
+// Validate given data from CSV.
+if (null !== $csvformdata) {
+    $out .= $csvmform->render();
 
-$csvmform->set_data($csvformdata);
-$csvmform->display();
+    echo html_writer::div($out);
+    $out = '';
 
+    // Convert line breaks into standard line breaks.
+    $filecontent = local_mentor_core_decode_csv_content($csvmform->get_file_content('domainscsv'));
+    // Check if file is valid UTF-8.
+    if (false === mb_detect_encoding($filecontent, 'UTF-8', false)) {
+        \core\notification::error(get_string('errorimport', 'local_categories_domains', 1));
+    } else {
+        // Convert lines into array.
+        $content = str_getcsv($filecontent, "\n");
+        local_categories_domains_validate_domains_csv($content);
+    }
+} else {
+
+    $csvmform->set_data($csvformdata);
+    $csvmform->display();
+}
 echo $OUTPUT->footer();

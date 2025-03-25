@@ -5,11 +5,11 @@
  * @package local_categories_domains
  */
 
-use \local_categories_domains\repository\categories_domains_repository;
-use \local_categories_domains\model\domain_name;
+
 
 defined('MOODLE_INTERNAL') || die();
-
+use \local_categories_domains\repository\categories_domains_repository;
+use \local_categories_domains\model\domain_name;
 global $CFG;
 
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
