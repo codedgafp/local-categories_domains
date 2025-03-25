@@ -66,8 +66,11 @@ class importdomainscsv_form extends moodleform
 
         $mform->addElement('header', 'importcsvheader', get_string('upload'));
 
-        $url = new moodle_url('/local/categories_domains/data/example.csv'); // TO DO
-        $link = html_writer::link($url, 'example.csv');
+        $link = html_writer::tag('button', "example.csv", [
+            'type' => 'button',
+            'id' => 'export_csv_domains',
+            'class' => 'button-as-link',
+        ]);
 
         $mform->addElement('static', 'examplecsv', html_writer::tag('span', get_string('textexamplecsv', 'local_categories_domains'), ['style' => 'color: red;']), $link);
         

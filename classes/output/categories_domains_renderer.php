@@ -127,4 +127,27 @@ class categories_domains_renderer extends \plugin_renderer_base {
         return $this->render_from_template('local_categories_domains/delete_domain_button', array('domain_name' => $domain_name));
     }
 
+    public function render_export_domains_csv() {
+        global $USER;        
+        
+        $entityid = required_param('entityid', PARAM_INT);
+        $entity = entity_api::get_entity($entityid);
+        $entityshortname = $entity?->shortname;
+        
+        $repository = new categories_domains_repository();
+        $domains = $repository->get_all_active_categories_domains();
+        
+        $this->page->requires->strings_for_js([
+            'headers_export_csv_domains'
+        ], 'local_categories_domains');
+
+        $this->page->requires->js_call_amd(
+            'local_categories_domains/categories_domains',
+            'triggerExportCSV',
+            ['entityshortname' => $entityshortname,
+            'domains' => $domains]
+        );
+    }
+
+
 }

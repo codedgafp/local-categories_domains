@@ -56,6 +56,10 @@ $out = '';
 echo $OUTPUT->header();
 echo $OUTPUT->heading($title);
 
+// Call the renderer for Export
+$renderer = $PAGE->get_renderer('local_categories_domains', 'categories_domains');
+echo $renderer->render_export_domains_csv();
+
 // Import CSV form.
 $csvmform = new importdomainscsv_form($url->out(), ['entityid' => $entityid]);
 $csvformdata = $csvmform->get_data();

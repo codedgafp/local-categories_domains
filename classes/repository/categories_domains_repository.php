@@ -242,4 +242,19 @@ class categories_domains_repository
     {
         return $this->db->get_records('course_categories_domains', ['disabled_at' => null]);
     }   
+    
+
+    /**
+     * Get all non deleted categories domains
+     * 
+     */
+    public function get_all_active_categories_domains(): array
+    {
+        $sql = "SELECT ccd.domain_name domain_name, cc.idnumber idnumber
+                FROM {course_categories_domains} ccd
+                JOIN {course_categories} cc ON cc.id = ccd.course_categories_id
+                AND ccd.disabled_at IS NULL
+                ";
+        return $this->db->get_records_sql($sql);
+    }
 }

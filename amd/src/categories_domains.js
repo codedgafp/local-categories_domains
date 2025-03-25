@@ -214,6 +214,45 @@ define([
                     $(this).dialog("destroy");
                 },
             });
+        },
+
+        triggerExportCSV: function(entityshortname, domains){
+            $('#export_csv_domains').on('click', () => {
+                this.downloadCSVFile(entityshortname, domains);
+                });
+        },
+        
+        downloadCSVFile: function(entityshortname, domains){
+            var csv = '';
+            var csvFile;
+            var downloadLink;
+            
+            // Add CSV Headers
+            var headers = M.util.get_string('headers_export_csv_domains', 'local_categories_domains');
+            csv += headers.join(';') + '\n';
+            
+            // Add CSV data
+            for (const domainKey in domains) {
+                if (domains.hasOwnProperty(domainKey)) {
+                    const item = domains[domainKey];
+                    csv += domainKey + ';' + (item.idnumber || '') + '\n';
+                }
+            }            
+
+            var dateobject = new Date();
+            var dateformat = dateobject.getFullYear() + '-' + ('0' + (dateobject.getMonth() + 1)).slice(-2) + '-' + ('0' + dateobject.getDate()).slice(-2);
+
+            var BOM = "\uFEFF";
+            var csvData = BOM + csv;
+
+            csvFile = new Blob([csvData], {type: 'text/csv'});
+            downloadLink = document.createElement("a");
+            downloadLink.download = 'export_csv' + '_' + entityshortname + '_' + dateformat + '.csv';
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
         }
     };
 

@@ -46,3 +46,6 @@ $string['textexamplecsv'] = 'Attention, cette opération réinitialise toutes le
 Il convient donc de télécharger l\'export de ces associations avant de lancer un nouvel import CSV.';
 $string['errorimport'] = 'Une erreur a été détectée dans le fichier à la ligne {$a}';
 $string['domainsimported'] = 'Import effectué';
+
+// Export CSV
+$string['headers_export_csv_domains'] = ['nom de domaine', 'nom court de l\'entité'];
