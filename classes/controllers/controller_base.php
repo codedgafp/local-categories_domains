@@ -41,8 +41,10 @@ abstract class controller_base
     public function get_required_param($paramname, $type = null, $default = null)
     {
         if (!isset($this->params[$paramname]) && !$default)
-            logger::error("[local_categories_domains@controller_base::get_required_param]",
-                "'$paramname' missing");
+            logger::error(
+                "[local_categories_domains@controller_base::get_required_param]",
+                "'$paramname' missing"
+            );
         return self::get_param($paramname, $type, $default);
     }
 
@@ -57,23 +59,23 @@ abstract class controller_base
      */
     public function get_param(string $paramname, ?string $type = null, $default = false)
     {
-
         if (isset($this->params[$paramname])) {
-
             /** @var mixed $class */
             $param = $this->params[$paramname];
 
             if (!empty($type)) {
                 switch ($type) {
-                    case PARAM_INT :
+                    case PARAM_INT:
                         if (!is_integer($param) && !ctype_digit($param)) {
-                            logger::error("[local_categories_domains@controller_base::get_param]",
-                                "'$paramname' must be an integer");
+                            logger::error(
+                                "[local_categories_domains@controller_base::get_param]",
+                                "'$paramname' must be an integer"
+                            );
                         }
-                        $param = (int)$param;
+                        $param = (int) $param;
                         break;
                     // Add cases for new types here.
-                    default :
+                    default:
                         is_array($param) ? clean_param_array($param, $type, true) : clean_param($param, $type);
                         break;
                 }

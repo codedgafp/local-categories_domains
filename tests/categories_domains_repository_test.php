@@ -14,11 +14,12 @@ global $CFG;
 
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
 require_once "$CFG->dirroot/local/categories_domains/classes/model/domain_name.php";
+require_once "$CFG->dirroot/local/mentor_specialization/classes/models/mentor_entity.php";
 
 class local_categories_domains_repository_testcase extends advanced_testcase
 {
     private $db;
-    private categories_domains_repository $categoriesDomainsRepository;
+    private categories_domains_repository $categoriesdomainsrepository;
 
     /**
      * Setup test
@@ -27,7 +28,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         parent::setUp();
 
         $this->resetAfterTest();
-        $this->categoriesDomainsRepository = new categories_domains_repository();
+        $this->categoriesdomainsrepository = new categories_domains_repository();
 
         global $DB;
         $this->db = $DB;
@@ -61,7 +62,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $domain1, false);
         $this->db->insert_record('course_categories_domains', $domain2, false);
 
-        $result = categories_domains_repository::get_active_domains_by_category($category->id);
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id);
 
         $this->assertCount(2, $result);
         $this->assertTrue(in_array('domain1.com', array_column($result, 'domain_name')));
@@ -78,7 +79,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
      * @covers \local_categories_domains\categories_domains_repository::get_active_domains_by_category
      */
     public function test_get_active_domains_with_non_existent_category() {
-        $result = categories_domains_repository::get_active_domains_by_category(99999);
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category(99999);
         
         $this->assertEmpty($result);
     }
@@ -111,11 +112,99 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $activeDomain, false);
         $this->db->insert_record('course_categories_domains', $disabledDomain, false);
 
-        $result = categories_domains_repository::get_active_domains_by_category($category->id);
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id);
 
         $this->assertCount(1, $result);
         $this->assertTrue(in_array('active.com', array_column($result, 'domain_name')));
         $this->assertFalse(in_array('disabled.com', array_column($result, 'domain_name')));
+
+        $this->resetAllData();
+    }
+
+    /**
+     * Test retrieving entities when domain exists
+     */
+    public function test_get_course_categories_by_domain_with_existing_domain() {
+        // Prepare test data
+        $category = $this->getDataGenerator()->create_category();
+
+        $domainname = 'testdomain.com';
+        $defaultmainentity = \local_mentor_specialization\mentor_entity::get_default_entity();
+        
+        // Insert a test record
+        $this->db->execute(
+            "INSERT INTO {course_categories_domains} 
+            (domain_name, course_categories_id, created_at) 
+            VALUES (?, ?, ?)",
+            [$domainname, $category->id, time()]
+        );
+
+        // Call the method
+        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
+        // Assertions
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals($category->id, reset($result)->id);
+
+        $this->resetAllData();
+    }
+
+    /**
+     * Test retrieving entities when domain does not exist
+     */
+    public function test_get_course_categories_by_domain_with_non_existing_domain() {
+        // Prepare test data
+        $domainname = 'nonexistentdomain.com';
+        $defaultmainentity = \local_mentor_specialization\mentor_entity::get_default_entity();
+
+        // Call the method
+        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
+
+        // Assertions
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals($defaultmainentity, reset($result));
+
+        $this->resetAllData();
+    }
+
+    /**
+     * Test retrieving entities with multiple records for a domain
+     */
+    public function test_get_course_categories_by_domain_with_multiple_records() {
+        // Prepare test data
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+
+        $domainname = 'multidomain.com';
+        $defaultmainentity = \local_mentor_specialization\mentor_entity::get_default_entity();
+        
+        // Insert multiple test records
+        $this->db->execute(
+            "INSERT INTO {course_categories_domains} 
+            (domain_name, course_categories_id, created_at) 
+            VALUES (?, ?, ?)",
+            [$domainname, $category1->id, time()]
+        );
+
+        $this->db->execute(
+            "INSERT INTO {course_categories_domains} 
+            (domain_name, course_categories_id, created_at) 
+            VALUES (?, ?, ?)",
+            [$domainname, $category2->id, time()]
+        );
+
+        // Call the method
+        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
+
+        // Assertions
+        $this->assertIsArray($result);
+        $this->assertCount(2, $result);
+        
+        // Verify each record
+        $entityids = array_map(function($item) { return $item->id; }, $result);
+        $this->assertContains($category1->id, $entityids);
+        $this->assertContains($category2->id, $entityids);
 
         $this->resetAllData();
     }
@@ -140,12 +229,12 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         ];
         $this->db->insert_record('course_categories_domains', $domain, false);
 
-        $domainslist = categories_domains_repository::get_active_domains_by_category($category->id);
-        $result = $this->categoriesDomainsRepository->delete_domain($category->id, $domainslist['domain.com']->domain_name);
+        $domainslist = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id);
+        $result = $this->categoriesdomainsrepository->delete_domain($category->id,$domainslist['domain.com']->domain_name);
         $this->assertTrue($result);
 
         $deletedDomain = $this->db->get_record('course_categories_domains', ['domain_name' =>$domainslist['domain.com']->domain_name, 'course_categories_id' => $category->id]);
-       $this->assertEquals($deletedDomain->disabled_at, time());
+        $this->assertEquals($deletedDomain->disabled_at, time());
     }
 
     /**
@@ -156,7 +245,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         
         $category = $this->getDataGenerator()->create_category();
         
-        $repo = $this->categoriesDomainsRepository;
+        $repo = $this->categoriesdomainsrepository;
         
         $domain = new domain_name();
         $domain->domain_name = 'test.com';
@@ -180,7 +269,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     public function test_domain_existence_true() {
         $category = $this->getDataGenerator()->create_category();
         
-        $repo = $this->categoriesDomainsRepository;
+        $repo = $this->categoriesdomainsrepository;
 
         $domain = new domain_name();
         $domain->domain_name = 'test.com';
@@ -201,7 +290,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         
         $category = $this->getDataGenerator()->create_category();
         
-        $repo = $this->categoriesDomainsRepository;
+        $repo = $this->categoriesdomainsrepository;
 
         $domain = new domain_name();
         $domain->domain_name = 'test_does_not_exist.com';

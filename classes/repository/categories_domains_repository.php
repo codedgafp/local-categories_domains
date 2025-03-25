@@ -31,10 +31,8 @@ class categories_domains_repository
      * @param string $orderdir
      * @return array
      */
-    public static function get_active_domains_by_category(int $coursecategoryid, string $orderdir = "DESC",string $orderBy = "created_at"): array
+    public function get_active_domains_by_category(int $coursecategoryid, string $orderdir = "DESC", string $orderBy = "created_at"): array
     {
-        global $DB;
-
         $sql = "SELECT ccd.domain_name
                 FROM {course_categories_domains} ccd
                 WHERE ccd.course_categories_id = :coursecategoryid
@@ -44,7 +42,7 @@ class categories_domains_repository
 
         $params["coursecategoryid"] = $coursecategoryid;
 
-        return $DB->get_records_sql($sql, $params);
+        return $this->db->get_records_sql($sql, $params);
     }
 
     /**
@@ -56,14 +54,14 @@ class categories_domains_repository
      * @return bool
      * @throws \moodle_exception
      */
-    public function delete_domain(int $coursecategoryid,string  $domain_name): bool
+    public function delete_domain(int $coursecategoryid, string $domain_name): bool
     {
         global $DB;
 
         $sql = "UPDATE {course_categories_domains}
                 SET disabled_at = :disabled_at
                 WHERE course_categories_id = :coursecategoryid 
-                  AND domain_name = :domain_name
+                AND domain_name = :domain_name
                 ";
 
         $params["coursecategoryid"] = $coursecategoryid;
@@ -77,9 +75,6 @@ class categories_domains_repository
         }
     }
 
-
-
-    
     /**
      * Check if the user is authorized to manage domains.
      * 
@@ -88,13 +83,31 @@ class categories_domains_repository
     public function admindedie_can_manage_domains(int $coursecategoryid): bool
     {
         global $USER;
-        
+
         $currententity = \local_mentor_core\entity_api::get_entity($coursecategoryid);
         $ismainentity = $currententity->is_main_entity();
-       // User must be a manager of the current main entity
-        return  $ismainentity &&  $currententity->is_manager($USER);
+        // User must be a manager of the current main entity
+        return $ismainentity && $currententity->is_manager($USER);
     }
 
+    /**
+     * Get all the entities by user domain. If no entities have been found, the default entity is return
+     * 
+     * @param string $domainname
+     * @param \stdClass defaultcategory
+     * @return array
+     */
+    public function get_course_categories_by_domain(string $domainname, \stdClass $defaultcategory): array
+    {
+        $sql = "SELECT mcc.*
+                FROM {course_categories} mcc
+                INNER JOIN {course_categories_domains} mccd on mcc.id = mccd.course_categories_id
+                WHERE mccd.domain_name = ?
+                ";
+        $coursecategories = $this->db->get_records_sql($sql, [$domainname]);
+
+        return $coursecategories ?: [$defaultcategory->id => $defaultcategory];
+    }
 
     /**
      * Check if the domain already exists for the same entity
@@ -104,21 +117,23 @@ class categories_domains_repository
      */
     public function is_domain_exists(domain_name $domain): bool
     {
-            return $this->db->record_exists_sql(
-                "SELECT 1 FROM {course_categories_domains} 
-                WHERE domain_name = :domainname
-                AND course_categories_id = :entity
-                AND disabled_at IS NULL",
-                ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
-            );
+        return $this->db->record_exists_sql(
+            "SELECT 1 FROM {course_categories_domains} 
+            WHERE domain_name = :domainname
+            AND course_categories_id = :entity
+            AND disabled_at IS NULL",
+            ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
+        );
     }
+
 
     /**
      * Insert domain name into database
      * @param domain_name $domain The domain name to check
      * @return bool
      */
-    public function add_domain(domain_name $domain){
+    public function add_domain(domain_name $domain)
+    {
         return $this->db->insert_record_raw('course_categories_domains', $domain, false);
     }
 
@@ -158,6 +173,35 @@ class categories_domains_repository
             return $DB->execute($sql, $params);
         } catch (\dml_exception $e) {
             throw new \moodle_exception('errordeletingdomain', 'local_categories_domains', '', $e->getMessage());
+        }
+    }
+
+    /**
+     * Update the users who needs to update their main entity
+     * 
+     * @param string $categoryname
+     * @param array $users
+     * @throws \moodle_exception
+     * @return void
+     */
+    public function update_users_course_category(string $categoryname, array $users): void
+    {
+        [$whereclause, $params] = $this->db->get_in_or_equal(
+            $users,
+            SQL_PARAMS_NAMED,
+            'userid'
+        );
+
+        $sql = "UPDATE {user_info_data}
+                SET \"data\" = :categoryname
+                WHERE userid $whereclause
+                AND fieldid = 6";
+        $params['categoryname'] = $categoryname;
+
+        try {
+            $this->db->execute($sql, $params);
+        } catch (\dml_exception $e) {
+            throw new \moodle_exception('errorupdatinguser', 'local_categories_domains', '', $e->getMessage());
         }
     }
 }

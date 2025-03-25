@@ -102,8 +102,10 @@ class front_controller
             '_controller.php';
 
         if (!file_exists($controllerurl)) {
-            logger::error("[local_categories_domains@front_controller::set_controller]",
-                "Controller not found $controller not found");
+            logger::error(
+                "[local_categories_domains@front_controller::set_controller]",
+                "Controller not found $controller not found"
+            );
         }
 
         require_once $controllerurl;
@@ -112,8 +114,10 @@ class front_controller
         $controller = strtolower($controller) . "_controller";
 
         if (!class_exists($this->namespace . $controller)) {
-            logger::error("[local_categories_domains@front_controller::set_controller]",
-                "'$controller' does not exist");
+            logger::error(
+                "[local_categories_domains@front_controller::set_controller]",
+                "'$controller' does not exist"
+            );
         }
 
         $this->controller = $controller;
@@ -134,8 +138,10 @@ class front_controller
         $reflector = new ReflectionClass($this->namespace . $this->controller);
 
         if (!$reflector->hasMethod($action)) {
-            logger::error("[local_categories_domains@front_controller::set_action]",
-                "action '$action' of '$this->controller' does not exist");
+            logger::error(
+                "[local_categories_domains@front_controller::set_action]",
+                "action '$action' of '$this->controller' does not exist"
+            );
         }
 
         $this->action = $action;
@@ -162,7 +168,7 @@ class front_controller
         /** @var array|null $json */
         $json = json_decode($jsonData, true);
 
-        $this->params = array_merge((array)$get, (array)$post, (array)$json);
+        $this->params = array_merge((array) $get, (array) $post, (array) $json);
     }
 
     /**
@@ -170,7 +176,7 @@ class front_controller
      * @return array
      * @throws request_exception | webservice_access_exception | moodle_exception
      */
-    public function run(): array | stdClass | bool
+    public function run(): array|stdClass|bool
     {
         /** @var string $class */
         $class = $this->namespace . $this->controller;
@@ -186,9 +192,12 @@ class front_controller
 
         /** @var string $action */
         $action = $controller->get_param('action');
-        if (!method_exists($controller, $action))
-            logger::error("[local_categories_domains@front_controller::run]",
-                "action '$action' of '$this->controller' does not exist");
+        if (!method_exists($controller, $action)) {
+            logger::error(
+                "[local_categories_domains@front_controller::run]",
+                "action '$action' of '$this->controller' does not exist"
+            );
+        }
 
         $callbackToReturn = call_user_func([$controller, $action]);
 

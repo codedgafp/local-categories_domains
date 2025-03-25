@@ -34,6 +34,7 @@ $repository = new categories_domains_repository();
 $entity = \local_mentor_core\entity_api::get_entity($entityid);
 $is_main_entity = $entity->can_be_main_entity();
 
+$categoriesdomainsrepository = new categories_domains_repository();
 // Check permissions.
 if (isloggedin() && (!$is_main_entity || (!is_siteadmin($USER) && !($repository->admindedie_can_manage_domains($entityid)) ))) {
     redirect($CFG->wwwroot, get_string('nopermissions', 'local_catalog'));

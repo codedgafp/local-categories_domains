@@ -63,4 +63,43 @@ class domain_name
         $categories_domains_repository = new categories_domains_repository();
         return $categories_domains_repository->is_domain_exists($this);
     }
+
+    /**
+     * From the user email, get only the domain
+     * 
+     * @param string $useremail
+     * @return string
+     */
+    public function get_user_domain(string $useremail): string
+    {
+        global $CFG;
+
+        $whitelistconfig = $CFG->allowemailaddresses;
+        $whitelist = array_map('trim', explode(' ', $whitelistconfig));
+
+        $parts = explode('@', $useremail);
+        $emaildomain = $parts[1];
+
+        foreach ($whitelist as $alloweddomain) {
+            $cleandomain = ltrim($alloweddomain, '.');
+
+            if (strtolower($cleandomain) === strtolower($emaildomain)) {
+                return $alloweddomain;
+            }
+
+            // Si le domaine dans la liste commençait par un point (ex: .archi.fr)
+            if (substr($alloweddomain, 0, 1) === '.') {
+                if (preg_match('/' . preg_quote($cleandomain, '/') . '$/i', $emaildomain)) {
+                    return $alloweddomain;
+                }
+                // Sinon, vérifier avec le motif standard (avec un point devant)
+            } else {
+                if (preg_match('/\.' . preg_quote($cleandomain, '/') . '$/i', $emaildomain)) {
+                    return $alloweddomain;
+                }
+            }
+        }
+
+        return $emaildomain;
+    }
 }

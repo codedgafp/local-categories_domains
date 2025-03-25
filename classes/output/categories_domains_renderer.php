@@ -25,7 +25,6 @@ use moodle_url;
 require_once($CFG->dirroot . '/local/mentor_core/api/entity.php');
 
 class categories_domains_renderer extends \plugin_renderer_base {
-    
     /**
      * Render the categories domains button
      *
@@ -53,7 +52,7 @@ class categories_domains_renderer extends \plugin_renderer_base {
      */
     public function render_manage_domains(): bool|string {
         global $USER;
-        
+
         $entityid = required_param('entityid', PARAM_INT);
         //admindeidie cannot manage domains only siteadmin
         $repository = new categories_domains_repository();
