@@ -192,10 +192,16 @@ class categories_domains_repository
         );
 
         $sql = "UPDATE {user_info_data}
-                SET \"data\" = :categoryname
+                SET data = :categoryname
                 WHERE userid $whereclause
-                AND fieldid = 6";
+                AND fieldid = (
+                    SELECT id
+                    FROM {user_info_field}
+                    WHERE shortname = :fieldname
+                    LIMIT 1
+                    )";
         $params['categoryname'] = $categoryname;
+        $params['fieldname'] = 'mainentity';
 
         try {
             $this->db->execute($sql, $params);
