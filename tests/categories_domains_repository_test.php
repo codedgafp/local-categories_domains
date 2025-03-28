@@ -14,7 +14,6 @@ global $CFG;
 
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
 require_once "$CFG->dirroot/local/categories_domains/classes/model/domain_name.php";
-require_once "$CFG->dirroot/local/mentor_specialization/classes/models/mentor_entity.php";
 
 class local_categories_domains_repository_testcase extends advanced_testcase
 {
@@ -129,7 +128,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $category = $this->getDataGenerator()->create_category();
 
         $domainname = 'testdomain.com';
-        $defaultmainentity = \local_mentor_specialization\mentor_entity::get_default_entity();
+        $defaultmainentity = $this->getDataGenerator()->create_category();
         
         // Insert a test record
         $this->db->execute(
@@ -155,7 +154,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     public function test_get_course_categories_by_domain_with_non_existing_domain() {
         // Prepare test data
         $domainname = 'nonexistentdomain.com';
-        $defaultmainentity = \local_mentor_specialization\mentor_entity::get_default_entity();
+        $defaultmainentity = $this->getDataGenerator()->create_category();
 
         // Call the method
         $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
@@ -177,7 +176,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $category2 = $this->getDataGenerator()->create_category();
 
         $domainname = 'multidomain.com';
-        $defaultmainentity = \local_mentor_specialization\mentor_entity::get_default_entity();
+        $defaultmainentity = $this->getDataGenerator()->create_category();
         
         // Insert multiple test records
         $this->db->execute(
@@ -299,8 +298,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $exists = $repo->is_domain_exists($domain);
         
         $this->assertFalse($exists);
-        
-        
     }
 
     /**

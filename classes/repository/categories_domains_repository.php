@@ -94,10 +94,10 @@ class categories_domains_repository
      * Get all the entities by user domain. If no entities have been found, the default entity is return
      * 
      * @param string $domainname
-     * @param \stdClass defaultcategory
+     * @param mixed defaultcategory
      * @return array
      */
-    public function get_course_categories_by_domain(string $domainname, \stdClass $defaultcategory): array
+    public function get_course_categories_by_domain(string $domainname, $defaultcategory): array
     {
         $sql = "SELECT mcc.*
                 FROM {course_categories} mcc
