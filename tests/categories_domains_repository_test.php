@@ -135,7 +135,12 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $domainname = 'testdomain.com';
         $defaultmainentity = $this->getDataGenerator()->create_category();
-
+        $defaultmainentityStdClass = (object) [
+            'id' => $defaultmainentity->id,
+            'name' => $defaultmainentity->name,
+            'description' => $defaultmainentity->description,
+            'parent' => $defaultmainentity->parent
+        ];
         // Insert a test record
         $this->db->execute(
             "INSERT INTO {course_categories_domains} 
@@ -145,7 +150,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         );
 
         // Call the method
-        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
+        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentityStdClass);
         // Assertions
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
@@ -163,13 +168,18 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $domainname = 'nonexistentdomain.com';
         $defaultmainentity = $this->getDataGenerator()->create_category();
 
-        // Call the method
-        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
+        $defaultmainentityStdClass = (object) [
+            'id' => $defaultmainentity->id,
+            'name' => $defaultmainentity->name,
+            'description' => $defaultmainentity->description,
+            'parent' => $defaultmainentity->parent
+        ];
+        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentityStdClass);
 
         // Assertions
         $this->assertIsArray($result);
         $this->assertCount(1, $result);
-        $this->assertEquals($defaultmainentity, reset($result));
+        $this->assertEquals($defaultmainentityStdClass->id, reset($result)->id);
 
         $this->resetAllData();
     }
@@ -185,7 +195,12 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $domainname = 'multidomain.com';
         $defaultmainentity = $this->getDataGenerator()->create_category();
-
+        $defaultmainentityStdClass = (object) [
+            'id' => $defaultmainentity->id,
+            'name' => $defaultmainentity->name,
+            'description' => $defaultmainentity->description,
+            'parent' => $defaultmainentity->parent
+        ];
         // Insert multiple test records
         $this->db->execute(
             "INSERT INTO {course_categories_domains} 
@@ -202,7 +217,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         );
 
         // Call the method
-        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentity);
+        $result = $this->categoriesdomainsrepository->get_course_categories_by_domain($domainname, $defaultmainentityStdClass);
 
         // Assertions
         $this->assertIsArray($result);

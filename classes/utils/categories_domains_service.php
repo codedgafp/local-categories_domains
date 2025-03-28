@@ -15,13 +15,10 @@ class categories_domains_service
 {
     public $categoriesdomainsrepository;
     public $db;
-    public $db;
+    
 
     public function __construct()
     {
-        global $DB;
-        $this->db = $DB;
-
         global $DB;
         $this->db = $DB;
 
@@ -99,13 +96,32 @@ class categories_domains_service
     {
         $userstoupdate = array_filter($users, function ($user) use ($domaintocheck): bool {
             $domain = new domain_name();
-            $domain->set_user_domain($user->email);
-            return $domaintocheck === $domain->domain_name;
-            $domain->set_user_domain($user->email);
+             $domain->set_user_domain($user->email);
             return $domaintocheck === $domain->domain_name;
         });
 
         return array_map(fn($user): string => $user->id, $userstoupdate);
+    }
+
+
+    /**
+     * Get list of entities by email
+     * 
+     * @param string $email
+     * @return array
+     */
+    public function get_list_entities_by_email(string $email) : array
+    {
+        $domain = new domain_name();
+        $domain->set_user_domain($email);
+        $emailDomain = $domain->domain_name;
+        $courseCategories = $this->categoriesdomainsrepository->get_course_categories_by_domain($emailDomain, \local_mentor_specialization\mentor_entity::get_default_entity());
+
+        $courseCategories = array_map(fn($entity): string => $entity->name, $courseCategories);
+
+        usort($courseCategories, fn($a, $b) => strcmp(local_mentor_core_sanitize_string($a), local_mentor_core_sanitize_string($b)));
+
+        return array_combine($courseCategories, $courseCategories);
     }
 
     /**

@@ -98,12 +98,14 @@ class categories_domains_repository
      * @param mixed defaultcategory
      * @return array
      */
-    public function get_course_categories_by_domain(string $domainname, $defaultcategory): array
+    public function get_course_categories_by_domain(string $domainname, \stdClass $defaultcategory,string $order = "ASC",string $orderBy = "mcc.name"): array
     {
         $sql = "SELECT mcc.*
                 FROM {course_categories} mcc
                 INNER JOIN {course_categories_domains} mccd on mcc.id = mccd.course_categories_id
                 WHERE mccd.domain_name = ?
+                 AND mccd.disabled_at IS NULL
+                order by $orderBy $order
                 ";
         $coursecategories = $this->db->get_records_sql($sql, [$domainname]);
 
