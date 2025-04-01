@@ -5,6 +5,8 @@
  *
  * @package local_categories_domains
  */
+use \local_categories_domains\repository\categories_domains_repository;
+
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
@@ -55,6 +57,86 @@ class lib_testcase extends advanced_testcase
         $CFG->allowemailaddresses = 'test.com example.com .subdomain.com';
         $content = ['domain_name;idnumber', 'notexisteddomainname;'.$category->idnumber];
         $result = local_categories_domains_validate_domains_csv($content);
-        self::assertFalse($result);       
+        self::assertFalse($result);
+
+
+        $this->resetAfterTest();
     }
+
+
+     /**
+     * Test for local_categories_domains_import_domains function.
+     */
+    public function test_local_categories_domains_import_domains() {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        // Prepare test data.
+        $content = [
+            'domain_name;idnumber',
+            'example.com;entity1',
+            'test.com;entity2'
+        ];
+
+        // Create actual categories for testing.
+        $category1 = $this->getDataGenerator()->create_category(['idnumber' => 'entity1']);
+        $category2 = $this->getDataGenerator()->create_category(['idnumber' => 'entity2']);
+
+        // Call the function.
+        $result = local_categories_domains_import_domains($content);
+        $this->assertTrue($result);
+        // Verify the domains were added to the database.
+        $domains = $DB->get_records('course_categories_domains');
+        $this->assertCount(2, $domains);
+
+        $this->assertNotEmpty(array_filter($domains, function ($domain) use ($category1) {
+            return $domain->domain_name === 'example.com' && $domain->course_categories_id == $category1->id;
+        }));
+
+        $this->assertNotEmpty(array_filter($domains, function ($domain) use ($category2) {
+            return $domain->domain_name === 'test.com' && $domain->course_categories_id == $category2->id;
+        }));
+
+        //Test the case where : desactivate the domains that are not vailable in the csv file
+        $newContent = [
+            'domain_name;idnumber',
+            'example.com;entity1',
+        ];
+        // Call the function.
+        $newResult = local_categories_domains_import_domains($newContent);
+        $this->assertTrue($newResult);
+
+        $getDomains = $DB->get_records('course_categories_domains');
+        $this->assertCount(2, $getDomains);
+
+        $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category1)   {
+            return $domain->domain_name === 'example.com' && $domain->course_categories_id == $category1->id && $domain->disabled_at === null;
+        }));
+        $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category2) {
+            return $domain->domain_name === 'test.com' && $domain->course_categories_id == $category2->id && $domain->disabled_at !== null;
+        }));
+
+         //Test the case where : re-activate the domains that are vailable in the csv file an dwhere disabled in DB
+         $reactivateContent = [
+            'domain_name;idnumber',
+            'example.com;entity1',
+            'test.com;entity2'
+        ];
+
+        $reactivateResult = local_categories_domains_import_domains($reactivateContent);
+        $this->assertTrue($reactivateResult);
+
+        $getDomains = $DB->get_records('course_categories_domains');
+        $this->assertCount(2, $getDomains);
+
+        $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category1) {
+            return $domain->domain_name === 'example.com' && $domain->course_categories_id == $category1->id && $domain->disabled_at === null;
+        }));
+        $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category2) {
+            return $domain->domain_name === 'test.com' && $domain->course_categories_id == $category2->id && $domain->disabled_at === null;
+        }));
+    }
+
+
 }

@@ -74,7 +74,17 @@ if (null !== $csvformdata) {
     } else {
         // Convert lines into array.
         $content = str_getcsv($filecontent, "\n");
-        local_categories_domains_validate_domains_csv($content);
+        if(local_categories_domains_validate_domains_csv($content))
+        {
+
+            // Import domains.
+            $imported = local_categories_domains_import_domains($content);
+            if ($imported) {
+                \core\notification::success(get_string('domainsimported', 'local_categories_domains', $imported));
+            } else {
+                \core\notification::error(get_string('errorimport', 'local_categories_domains', 1));
+            }
+        }
     }
 } else {
 

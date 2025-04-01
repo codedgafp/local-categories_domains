@@ -132,8 +132,7 @@ class categories_domains_repository
      * @param domain_name $domain The domain name to check
      * @return bool
      */
-    public function add_domain(domain_name $domain)
-    {
+    public function add_domain(domain_name $domain){ 
         return $this->db->insert_record_raw('course_categories_domains', $domain, false);
     }
 
@@ -204,4 +203,43 @@ class categories_domains_repository
             throw new \moodle_exception('errorupdatinguser', 'local_categories_domains', '', $e->getMessage());
         }
     }
+
+    /**
+     * Get domain by domain name
+     * 
+     * @param domain_name $domain The domain to check    
+     */
+    public  function get_domain($domain ){
+        return $this->db->get_record('course_categories_domains', ['domain_name' => $domain->domain_name,'course_categories_id' => $domain->course_categories_id]);
+    }
+
+    /**
+     * Get all domains
+     * 
+     * @return array
+     */
+    public function get_all_domains() : array
+    {
+        return $this->db->get_records('course_categories_domains');
+    }
+    
+    public function reactivate_domain(int $coursecategoryid, string $domain_name): bool
+    {
+        global $DB;
+
+        $sql = "UPDATE {course_categories_domains}
+                SET disabled_at = NULL
+                WHERE course_categories_id = :coursecategoryid 
+                  AND domain_name = :domain_name
+                ";
+
+        $params["coursecategoryid"] = $coursecategoryid;
+        $params["domain_name"] = $domain_name;
+        return $DB->execute($sql, $params);
+    }
+
+    public function get_all_activated_domains(): array
+    {
+        return $this->db->get_records('course_categories_domains', ['disabled_at' => null]);
+    }   
 }

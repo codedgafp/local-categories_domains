@@ -451,4 +451,112 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     }
 
 
+
+    /**
+     * Test get all domains
+     *
+     * @throws ReflectionException
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @covers \local_categories_domains\categories_domains_repository::get_all_domains
+     */
+    public function test_get_all_domains() {
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+        
+        $domain1 = (object)[
+            'course_categories_id' => $category1->id,
+            'domain_name' => 'domain1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $domain2 = (object)[
+            'course_categories_id' => $category2->id,
+            'domain_name' => 'domain2.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        
+        $this->db->insert_record('course_categories_domains', $domain1, false);
+        $this->db->insert_record('course_categories_domains', $domain2, false);
+
+        $result = $this->categoriesdomainsrepository->get_all_domains();
+
+        $this->assertCount(2, $result);
+        $this->assertTrue(in_array('domain1.com', array_column($result, 'domain_name')));
+        $this->assertTrue(in_array('domain2.com', array_column($result, 'domain_name')));
+    }
+
+    /**
+     * Test reactivating a domain
+     *
+     * @throws ReflectionException
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @covers \local_categories_domains\categories_domains_repository::reactivate_domain
+     */
+    public function test_reactivate_domain() {
+        $category = $this->getDataGenerator()->create_category();
+        
+        $domain = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'reactivate.com',
+            'created_at' => time(),
+            'disabled_at' => time()
+        ];
+        $this->db->insert_record('course_categories_domains', $domain, false);
+
+        $result = $this->categoriesdomainsrepository->reactivate_domain($category->id, 'reactivate.com');
+        $this->assertTrue($result);
+
+        $reactivatedDomain = $this->db->get_record('course_categories_domains', ['domain_name' => 'reactivate.com', 'course_categories_id' => $category->id]);
+        $this->assertNull($reactivatedDomain->disabled_at);
+    }
+
+ /**
+     * Test get all activated domains
+     *
+     * @throws ReflectionException
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @covers \local_categories_domains\categories_domains_repository::get_all_activated_domains
+     */
+    public function test_get_all_activated_domains() {
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+        
+        $activeDomain1 = (object)[
+            'course_categories_id' => $category1->id,
+            'domain_name' => 'active1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $activeDomain2 = (object)[
+            'course_categories_id' => $category2->id,
+            'domain_name' => 'active2.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $disabledDomain = (object)[
+            'course_categories_id' => $category1->id,
+            'domain_name' => 'disabled.com',
+            'created_at' => time(),
+            'disabled_at' => time()
+        ];
+        
+        $this->db->insert_record('course_categories_domains', $activeDomain1, false);
+        $this->db->insert_record('course_categories_domains', $activeDomain2, false);
+        $this->db->insert_record('course_categories_domains', $disabledDomain, false);
+
+        $result = $this->categoriesdomainsrepository->get_all_activated_domains();
+
+        $this->assertCount(2, $result);
+        $this->assertTrue(in_array('active1.com', array_column($result, 'domain_name')));
+        $this->assertTrue(in_array('active2.com', array_column($result, 'domain_name')));
+        $this->assertFalse(in_array('disabled.com', array_column($result, 'domain_name')));
+    }
+
 }

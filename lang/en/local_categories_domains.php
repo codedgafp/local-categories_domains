@@ -45,3 +45,4 @@ $string['validate_import'] = 'Valider l\'import';
 $string['textexamplecsv'] = 'Attention, cette opération réinitialise toutes les associations domaines / espaces dédiés existantes.
 Il convient donc de télécharger l\'export de ces associations avant de lancer un nouvel import CSV.';
 $string['errorimport'] = 'Une erreur a été détectée dans le fichier à la ligne {$a}';
+$string['domainsimported'] = 'Import effectué';
