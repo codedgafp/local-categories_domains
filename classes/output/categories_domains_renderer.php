@@ -39,8 +39,10 @@ class categories_domains_renderer extends \plugin_renderer_base {
         $params = array();        
         $params['url'] = new moodle_url('/local/categories_domains/index.php?entityid=' . $entityid);
         $params['entityid'] = $entityid;
+        $objentity = entity_api::get_entity($entityid);
+        $is_main_entity = $objentity->can_be_main_entity();
         $repository = new categories_domains_repository();
-        $params['user_can_manage_domains'] = $repository->admindedie_can_manage_domains($entityid) || is_siteadmin($USER);
+        $params['user_can_manage_domains'] = $is_main_entity && ($repository->admindedie_can_manage_domains($entityid) || is_siteadmin($USER));
         return $this->render_from_template('local_categories_domains/manage_domains_button', $params);
     }
 
@@ -95,7 +97,7 @@ class categories_domains_renderer extends \plugin_renderer_base {
 
         foreach ($managedentities as $managedentity) {
 
-            if (!$managedentity->is_main_entity()) {
+            if (!$managedentity->can_be_main_entity()) {
                 continue;
             }
             $entitydata = new \stdClass();
@@ -103,6 +105,9 @@ class categories_domains_renderer extends \plugin_renderer_base {
             $entitydata->link =  new moodle_url('/local/categories_domains/index.php', ['entityid' => $managedentity->id]);
             $entitydata->selected = $entityid == $managedentity->id;
             $data->switchentities[] = $entitydata;
+        }
+        if (count($data->switchentities) <= 1) {
+            return '';
         }
         // Call template.
         $PAGE->requires->string_for_js('pleaserefresh', 'format_edadmin');

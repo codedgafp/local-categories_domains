@@ -30,15 +30,17 @@ $PAGE->set_context($context);
 // Get entity id.
 $entityid = required_param('entityid', PARAM_INT); 
 $repository = new categories_domains_repository();
+// Get entity.
+$entity = \local_mentor_core\entity_api::get_entity($entityid);
+$is_main_entity = $entity->can_be_main_entity();
 
 // Check permissions.
-if (isloggedin() && ( !is_siteadmin($USER) && !($repository->admindedie_can_manage_domains($entityid)) )) {
+if (isloggedin() && (!$is_main_entity || (!is_siteadmin($USER) && !($repository->admindedie_can_manage_domains($entityid)) ))) {
     redirect($CFG->wwwroot, get_string('nopermissions', 'local_catalog'));
     exit;
 }
 
-// Get entity.
-$entity = \local_mentor_core\entity_api::get_entity($entityid);
+
 
 // Get local user edadmin course for navbar link.
 $usercourse = $entity->get_edadmin_courses('user');
