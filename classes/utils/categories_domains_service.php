@@ -15,9 +15,13 @@ class categories_domains_service
 {
     public $categoriesdomainsrepository;
     public $db;
+    public $db;
 
     public function __construct()
     {
+        global $DB;
+        $this->db = $DB;
+
         global $DB;
         $this->db = $DB;
 
@@ -95,6 +99,8 @@ class categories_domains_service
     {
         $userstoupdate = array_filter($users, function ($user) use ($domaintocheck): bool {
             $domain = new domain_name();
+            $domain->set_user_domain($user->email);
+            return $domaintocheck === $domain->domain_name;
             $domain->set_user_domain($user->email);
             return $domaintocheck === $domain->domain_name;
         });
