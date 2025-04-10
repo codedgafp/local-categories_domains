@@ -25,10 +25,11 @@ class categories_domains_service
     }
 
     /**
-     * Relie les utilisateurs avec la catégorie auquel il doit être associé
+     * Lie automatiquement les utilisateurs à l'entité auquel il doit être relié.
+     * De plus gère automatiquement l'attribution du rôle externe.
      * 
      * @param array $users
-     * @param \stdClass|core_course_category|null $category
+     * @param \stdClass|\core_course_category $category
      * @return bool
      */
     public function link_categories_to_users(array $users, \stdClass|core_course_category $category = null): bool
@@ -38,7 +39,7 @@ class categories_domains_service
         $domainsdata = array_unique(array_map([$this, 'get_domains_data'], $users), SORT_REGULAR);
 
         foreach ($domainsdata as $domain) {
-            $userstoupdate = $this->get_user_to_update($users, $domain['domainname']);
+            $userstoupdate = $this->get_users_to_update($users, $domain['domainname']);
 
             if ($domain['iswhitelist'] == false) {
                 // RG01-MEN-474
@@ -50,7 +51,7 @@ class categories_domains_service
                 }
                 // RG01-MEN-474
 
-                $this->set_unwhitelist_domain_user_external($categorytoset, $userstoupdate);
+                $this->update_domain_users($categorytoset, $userstoupdate, true);
 
                 continue;
             }
@@ -61,12 +62,18 @@ class categories_domains_service
                 continue; // TODO: à traiter, cas où plusieurs category sont trouvés
             }
 
-            $this->categoriesdomainsrepository->update_users_course_category(reset($categoriesbydomain)->name, $userstoupdate);
+            $this->update_domain_users(reset($categoriesbydomain), $userstoupdate, false);
         }
 
         return true;
     }
 
+    /**
+     * Get the domain name and if the domain is in the white list
+     * 
+     * @param mixed $user
+     * @return array{domainname: string, iswhitelist: bool}
+     */
     private function get_domains_data($user): array
     {
         $domain = new domain_name();
@@ -77,7 +84,14 @@ class categories_domains_service
         ];
     }
 
-    private function get_user_to_update($users, $domaintocheck)
+    /**
+     * Get all the users to update depends of the checking domain
+     * 
+     * @param array $users
+     * @param string $domaintocheck
+     * @return array[]
+     */
+    private function get_users_to_update(array $users, string $domaintocheck): array
     {
         $userstoupdate = array_filter($users, function ($user) use ($domaintocheck): bool {
             $domain = new domain_name();
@@ -88,18 +102,25 @@ class categories_domains_service
         return array_map(fn($user): string => $user->id, $userstoupdate);
     }
 
-    public function set_unwhitelist_domain_user_external($categorytoset, $userstoupdate): void
+    /**
+     * Update all the users linked entity and the external role
+     * 
+     * @param \stdClass|core_course_category $categorytoset
+     * @param array $userstoupdate
+     * @param bool $setexternalrole
+     * @return void
+     */
+    private function update_domain_users(\stdClass|core_course_category $categorytoset, array $userstoupdate, bool $setexternalrole): void
     {
         $dbinterface = \local_mentor_core\database_interface::get_instance();
-
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
 
         foreach ($userstoupdate as $userid) {
-            $isexternal = $this->db->get_record('role_assignments', ['userid' => $userid, 'roleid' => $externalrole->id]);
+            toggle_external_user_role($userid, $setexternalrole);
 
-            if ($isexternal == false) {
+            $isexternal = $this->db->get_record('role_assignments', ['userid' => $userid, 'roleid' => $externalrole->id]);
+            if ($isexternal && $setexternalrole) {
                 $dbinterface->set_profile_field_value($userid, 'roleMentor', $externalrole->shortname);
-                toggle_external_user_role($userid, true);
             }
         }
 
