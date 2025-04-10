@@ -68,9 +68,9 @@ class domain_name
      * From the user email, get only the domain
      * 
      * @param string $useremail
-     * @return string
+     * @return void
      */
-    public function get_user_domain(string $useremail): string
+    public function set_user_domain(string $useremail): void
     {
         global $CFG;
 
@@ -84,22 +84,26 @@ class domain_name
             $cleandomain = ltrim($alloweddomain, '.');
 
             if (strtolower($cleandomain) === strtolower($emaildomain)) {
-                return $alloweddomain;
+                $this->domain_name = $alloweddomain;
             }
-
+            
             // Si le domaine dans la liste commençait par un point (ex: .archi.fr)
             if (substr($alloweddomain, 0, 1) === '.') {
                 if (preg_match('/' . preg_quote($cleandomain, '/') . '$/i', $emaildomain)) {
-                    return $alloweddomain;
+                    $this->domain_name = $alloweddomain;
+                    break;
                 }
                 // Sinon, vérifier avec le motif standard (avec un point devant)
             } else {
                 if (preg_match('/\.' . preg_quote($cleandomain, '/') . '$/i', $emaildomain)) {
-                    return $alloweddomain;
+                    $this->domain_name = $alloweddomain;
+                    break;
                 }
             }
+        }  
+        
+        if (!isset($this->domain_name)) {
+            $this->domain_name = $emaildomain;
         }
-
-        return $emaildomain;
     }
 }

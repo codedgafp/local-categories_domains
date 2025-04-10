@@ -19,7 +19,8 @@ class categories_domains_repository
      */
     protected $db;
 
-    public function __construct() {
+    public function __construct()
+    {
         global $DB;
         $this->db = $DB;
     }
@@ -126,13 +127,13 @@ class categories_domains_repository
         );
     }
 
-
     /**
      * Insert domain name into database
      * @param domain_name $domain The domain name to check
      * @return bool
      */
-    public function add_domain(domain_name $domain){ 
+    public function add_domain(domain_name $domain)
+    {
         return $this->db->insert_record_raw('course_categories_domains', $domain, false);
     }
 
@@ -199,7 +200,7 @@ class categories_domains_repository
                     FROM {user_info_field}
                     WHERE shortname = :fieldname
                     LIMIT 1
-                    )";
+                )";
         $params['categoryname'] = $categoryname;
         $params['fieldname'] = 'mainentity';
 
@@ -215,8 +216,9 @@ class categories_domains_repository
      * 
      * @param domain_name $domain The domain to check    
      */
-    public  function get_domain($domain ){
-        return $this->db->get_record('course_categories_domains', ['domain_name' => $domain->domain_name,'course_categories_id' => $domain->course_categories_id]);
+    public function get_domain($domain)
+    {
+        return $this->db->get_record('course_categories_domains', ['domain_name' => $domain->domain_name, 'course_categories_id' => $domain->course_categories_id]);
     }
 
     /**
@@ -224,11 +226,11 @@ class categories_domains_repository
      * 
      * @return array
      */
-    public function get_all_domains() : array
+    public function get_all_domains(): array
     {
         return $this->db->get_records('course_categories_domains');
     }
-    
+
     public function reactivate_domain(int $coursecategoryid, string $domain_name): bool
     {
         global $DB;
@@ -236,7 +238,7 @@ class categories_domains_repository
         $sql = "UPDATE {course_categories_domains}
                 SET disabled_at = NULL
                 WHERE course_categories_id = :coursecategoryid 
-                  AND domain_name = :domain_name
+                AND domain_name = :domain_name
                 ";
 
         $params["coursecategoryid"] = $coursecategoryid;
@@ -247,8 +249,7 @@ class categories_domains_repository
     public function get_all_activated_domains(): array
     {
         return $this->db->get_records('course_categories_domains', ['disabled_at' => null]);
-    }   
-    
+    }
 
     /**
      * Get all non deleted categories domains
@@ -262,5 +263,25 @@ class categories_domains_repository
                 AND ccd.disabled_at IS NULL
                 ";
         return $this->db->get_records_sql($sql);
+    }
+
+    public function get_user_link_category(int $userid)
+    {
+        $sql = "SELECT uid.data as categoryname
+                FROM {user_info_data} uid
+                INNER JOIN {user} u ON u.id = uid.userid
+                WHERE u.id = :userid
+                AND uid.fieldid = (
+                    SELECT id
+                    FROM {user_info_field}
+                    WHERE shortname = :fieldname
+                    LIMIT 1
+                )";
+        $params = [
+            'userid' => $userid,
+            'fieldname' => 'mainentity'
+        ];
+
+        return $this->db->get_record_sql($sql, $params);
     }
 }
