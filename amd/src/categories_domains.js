@@ -40,6 +40,7 @@ define([
                 serverSide: true,
                 info: false,
                 paging: false,
+                order: [],
                 ajax: {
                     //Call data members cohort
                     url: M.cfg.wwwroot + '/local/categories_domains/ajax/ajax.php',
@@ -53,6 +54,10 @@ define([
                 oLanguage: {
                     sUrl: M.cfg.wwwroot + '/local/mentor_core/datatables/lang/' + M.util.get_string('langfile', 'local_categories_domains') + ".json"
                 },
+                columnDefs: [{
+                    orderable: false, 
+                    targets: 1 
+                }],
                 columns: user_can_manage_domains ? 
                     [
                         {data: 'domain_name'},

@@ -31,19 +31,20 @@ class categories_domains_controller extends controller_base
         // Set context.
         $PAGE->set_context($context);
         $entityid = $this->get_param('entityid', PARAM_INT);
+        $order = $this->get_param('order');
+        $orderdir = $order[0]['dir'] ?? "DESC";
 
         if (empty($entityid)) {
             throw new \moodle_exception('entityidnotset', 'error');
         }
 
-        $domainsbycategory = categories_domains_repository::get_active_domains_by_category($entityid);
+        $domainsbycategory = categories_domains_repository::get_active_domains_by_category($entityid, $orderdir);
 
         $tablearray = [];
         $categoriesDomainsRenderer = $PAGE->get_renderer('local_categories_domains', 'categories_domains');
         foreach ($domainsbycategory as $domain) {
             $tablearray['data'][] = [
                 'domain_name' => $domain->domain_name,
-                
                 'actions' => $categoriesDomainsRenderer->render_action_buttons($domain->domain_name)
             ];
         }

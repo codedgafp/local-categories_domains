@@ -23,8 +23,15 @@ class categories_domains_repository
         global $DB;
         $this->db = $DB;
     }
-    
-    public static function get_active_domains_by_category(int $coursecategoryid): array
+
+    /**
+     * Get all the active domains by the category ID, order by created_at column DESC by default
+     * 
+     * @param int $coursecategoryid
+     * @param string $orderdir
+     * @return array
+     */
+    public static function get_active_domains_by_category(int $coursecategoryid, string $orderdir = "DESC"): array
     {
         global $DB;
 
@@ -32,6 +39,7 @@ class categories_domains_repository
                 FROM {course_categories_domains} ccd
                 WHERE ccd.course_categories_id = :coursecategoryid
                 AND ccd.disabled_at IS NULL
+                ORDER BY ccd.created_at $orderdir
                 ";
 
         $params["coursecategoryid"] = $coursecategoryid;
