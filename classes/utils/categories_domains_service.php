@@ -38,7 +38,7 @@ class categories_domains_service
      */
     public function link_categories_to_users(array $users, \stdClass|core_course_category $category = null): bool
     {
-        $defaultcategory = mentor_entity::get_default_entity();
+        $defaultcategory = $this->get_default_entity();
 
         $domainsdata = array_unique(array_map([$this, 'get_domains_data'], $users), SORT_REGULAR);
 
@@ -152,7 +152,7 @@ class categories_domains_service
         $domain = new domain_name();
         $domain->set_user_domain($email);
         $emailDomain = $domain->domain_name;
-        $courseCategories = $this->categoriesdomainsrepository->get_course_categories_by_domain($emailDomain, mentor_entity::get_default_entity());
+        $courseCategories = $this->categoriesdomainsrepository->get_course_categories_by_domain($emailDomain, $this->get_default_entity());
 
         $courseCategories = array_map(fn($entity): string => $entity->name, $courseCategories);
 

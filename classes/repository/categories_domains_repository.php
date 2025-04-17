@@ -255,11 +255,13 @@ class categories_domains_repository
         global $DB;
 
         $sql = "UPDATE {course_categories_domains}
-                SET disabled_at = NULL
+                SET created_at = :createdat,
+                    disabled_at = NULL
                 WHERE course_categories_id = :coursecategoryid 
                 AND domain_name = :domain_name
                 ";
 
+        $params["createdat"] = time();
         $params["coursecategoryid"] = $coursecategoryid;
         $params["domain_name"] = $domain_name;
         return $DB->execute($sql, $params);
@@ -443,5 +445,54 @@ class categories_domains_repository
                 ";
 
         $this->db->execute($sql, $params);
+    }
+
+    /**
+     * Get all the last created or updated course_categories and categories_domains link
+     * 
+     * @param int $datenow
+     * @param int $datedelay
+     * @return array
+     */
+    public function get_all_created_or_updated_domains(int $nexttimesheduled, int $lasttimerun): array
+    {
+        $sql = "SELECT DISTINCT(domain_name)
+                FROM {course_categories_domains}
+                WHERE (
+                    created_at < :timecreatedat
+                    AND created_at > :delaycreatedat
+                    AND disabled_at IS NULL
+                )
+                OR (
+                    disabled_at < :timedisabledat
+                    AND disabled_at > :delaydisabledat
+                )";
+
+        $params = [
+            'timecreatedat' => $nexttimesheduled,
+            'delaycreatedat' => $lasttimerun,
+            'timedisabledat' => $nexttimesheduled,
+            'delaydisabledat' => $lasttimerun,
+        ];
+
+        return $this->db->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Get all users with a defined domain name
+     * Exemple of domain : domain.fr - .domain.fr - sub.domain.fr - .sub.domain.fr
+     * 
+     * @param string $domainname
+     * @return array
+     */
+    public function get_all_users_by_domain_name(string $domainname): array
+    {
+        $sql = "SELECT *
+                FROM {user} 
+                WHERE email ~* CONCAT('@.*', REGEXP_REPLACE(?::text, '^[\\.]+', ''), '$')";
+
+        $params['domainname'] = $domainname;
+
+        return $this->db->get_records_sql($sql, $params);
     }
 }
