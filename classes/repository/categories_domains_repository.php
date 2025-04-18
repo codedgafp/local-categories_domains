@@ -24,7 +24,7 @@ class categories_domains_repository
         global $DB;
         $this->db = $DB;
     }
-
+    
     /**
      * Get all the active domains by the category ID, order by created_at column DESC by default
      * 
@@ -43,13 +43,15 @@ class categories_domains_repository
         $params["coursecategoryid"] = $coursecategoryid;
 
         if (!empty($search) && mb_strlen(trim($search)) > 0) {
-            $sql .= $this->apply_search_conditions($params,$search);          
-        } 
-        
+            $sql .= $this->apply_search_conditions($params, $search);
+        }
+
+        $sql .= "ORDER BY ccd.created_at $orderdir";
+
         return $this->db->get_records_sql($sql, $params);
     }
-    
-    private function apply_search_conditions(array &$params, string $search) : string
+
+    private function apply_search_conditions(array &$params, string $search): string
     {
         $searchvalue = trim($search);
         $searchvalue = str_replace("&#39;", "\'", $searchvalue);
@@ -63,19 +65,18 @@ class categories_domains_repository
         $listsearchvalue = explode(" ", $searchvalue);
 
         $searchConditions = [];
-           
+
         foreach ($listsearchvalue as $key => $partsearchvalue) {
-           if (!$partsearchvalue) {
+            if (!$partsearchvalue) {
                 continue;
             }
             $domainSearchConditions = [
                 $this->db->sql_like('ccd.domain_name', ':domainname' . $key, false, false)
             ];
             $searchConditions[] = '(' . implode(' OR ', $domainSearchConditions) . ')';
-            $params["domainname".$key] = '%' .  $this->db->sql_like_escape($partsearchvalue) . '%';
-
+            $params["domainname" . $key] = '%' . $this->db->sql_like_escape($partsearchvalue) . '%';
         }
-       
+
         return (!empty($searchConditions)) ? ' AND (' . implode(' AND ', $searchConditions) . ')' : "";
     }
 
@@ -128,16 +129,18 @@ class categories_domains_repository
      * Get all the entities by user domain. If no entities have been found, the default entity is return
      * 
      * @param string $domainname
-     * @param mixed defaultcategory
+     * @param \stdClass $defaultcategory
+     * @param string $order
+     * @param string $orderBy
      * @return array
      */
-    public function get_course_categories_by_domain(string $domainname, \stdClass $defaultcategory,string $order = "ASC",string $orderBy = "mcc.name"): array
+    public function get_course_categories_by_domain(string $domainname, \stdClass $defaultcategory, string $order = "ASC", string $orderBy = "mcc.name"): array
     {
         $sql = "SELECT mcc.*
                 FROM {course_categories} mcc
                 INNER JOIN {course_categories_domains} mccd on mcc.id = mccd.course_categories_id
                 WHERE mccd.domain_name = ?
-                 AND mccd.disabled_at IS NULL
+                AND mccd.disabled_at IS NULL
                 order by $orderBy $order
                 ";
         $coursecategories = $this->db->get_records_sql($sql, [$domainname]);

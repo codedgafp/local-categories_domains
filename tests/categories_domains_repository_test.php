@@ -503,7 +503,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $domain1, false);
         $this->db->insert_record('course_categories_domains', $domain2, false);
 
-        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id, 'domain1');
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id, 'DESC', 'domain1');
 
         $this->assertCount(1, $result);
         $this->assertTrue(in_array('domain1.com', array_column($result, 'domain_name')));
