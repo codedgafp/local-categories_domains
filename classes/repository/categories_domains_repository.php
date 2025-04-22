@@ -224,12 +224,13 @@ class categories_domains_repository
      */
     public function update_users_course_category(string $categoryname, array $users): void
     {
+        if (empty($users)) return;
         [$whereclause, $params] = $this->db->get_in_or_equal(
             $users,
             SQL_PARAMS_NAMED,
             'userid'
         );
-
+        
         $sql = "UPDATE {user_info_data}
                 SET data = :categoryname
                 WHERE userid $whereclause
@@ -291,7 +292,7 @@ class categories_domains_repository
 
     /**
      * Get all non deleted categories domains
-     * 
+     *
      */
     public function get_all_active_categories_domains(): array
     {
@@ -321,5 +322,37 @@ class categories_domains_repository
         ];
 
         return $this->db->get_record_sql($sql, $params);
+    }
+
+    /**
+     * Get user main entity
+     */
+    public function get_users_missmatch_categories(array $userstoupdate, array $categories)
+    {
+        [$whereusers, $paramsusers] = $this->db->get_in_or_equal(
+            $userstoupdate,
+            SQL_PARAMS_NAMED,
+            'userid'
+        );
+
+        [$wherecategories, $paramscategories] = $this->db->get_in_or_equal(
+            $categories,
+            SQL_PARAMS_NAMED,
+            'mainentityid',
+            false
+        );
+
+        $sql = "SELECT u.id
+                FROM {user} u
+                INNER JOIN {user_info_data} uid ON uid.userid = u.id
+                INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
+                WHERE u.id $whereusers
+                AND uid.data $wherecategories
+                ";
+        $params["fieldname"] = 'mainentity';
+
+        $params = array_merge($paramsusers, $paramscategories, $params);
+
+        return $this->db->get_records_sql($sql, $params);
     }
 }

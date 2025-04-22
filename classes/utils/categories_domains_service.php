@@ -15,7 +15,7 @@ class categories_domains_service
 {
     public $categoriesdomainsrepository;
     public $db;
-    
+
 
     public function __construct()
     {
@@ -58,9 +58,20 @@ class categories_domains_service
             }
 
             $categoriesbydomain = $this->categoriesdomainsrepository->get_course_categories_by_domain($domain['domainname'], $defaultcategory);
-
             if (count($categoriesbydomain) > 1) {
-                continue; // TODO: à traiter, cas où plusieurs category sont trouvés
+                $categoriesname = array_map(fn($category): string => $category->name , $categoriesbydomain);
+
+                $userstoupdatearray = $this->categoriesdomainsrepository->get_users_missmatch_categories($userstoupdate, $categoriesname);
+                
+                if ($userstoupdatearray) {
+                    $userstoupdate = array_map(fn($user): string => $user->id, $userstoupdatearray);
+
+                    $emptycoursecategory = new \stdClass();
+                    $emptycoursecategory->name = "";
+                    $this->update_domain_users($emptycoursecategory, $userstoupdate, true);
+                }
+
+                continue;
             }
 
             $this->update_domain_users(reset($categoriesbydomain), $userstoupdate, false);
@@ -96,7 +107,7 @@ class categories_domains_service
     {
         $userstoupdate = array_filter($users, function ($user) use ($domaintocheck): bool {
             $domain = new domain_name();
-             $domain->set_user_domain($user->email);
+            $domain->set_user_domain($user->email);
             return $domaintocheck === $domain->domain_name;
         });
 
@@ -110,7 +121,7 @@ class categories_domains_service
      * @param string $email
      * @return array
      */
-    public function get_list_entities_by_email(string $email) : array
+    public function get_list_entities_by_email(string $email): array
     {
         $domain = new domain_name();
         $domain->set_user_domain($email);

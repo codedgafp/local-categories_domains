@@ -780,18 +780,104 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertTrue($result === true);
     }
 
-    private function set_user_info_data(int $userid): void
+    private function set_user_info_data(int $userid, string $categoryname = ''): void
     {
         $mainentityfield = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
 
         $sql = "INSERT INTO {user_info_data} (userid, fieldid, data, dataformat)
-                VALUES (:userid, :mainentityfield, '', 0)
+                VALUES (:userid, :mainentityfield, :categoryname, 0)
                 ";
         $params = [
             'userid' => $userid,
-            'mainentityfield' => $mainentityfield->id
+            'mainentityfield' => $mainentityfield->id,
+            'categoryname' => $categoryname
         ];
 
         $this->db->execute($sql, $params);
     }
+
+
+    /**
+     * Test linking users to course categories (entities) based on their emails.
+     * Case: Many course-categories could be set to the user, the user has an invalid entity
+     */
+
+     public function test_link_categories_to_users_multiple_choices_invalid_enity()
+     {
+        global $CFG;
+
+        $CFG->allowemailaddresses = 'test1.com test2.com';
+
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+
+        $activeDomain1 = (object) [
+            'course_categories_id' => $category1->id,
+            'domain_name' => 'test1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $activeDomain2 = (object) [
+            'course_categories_id' => $category2->id,
+            'domain_name' => 'test1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+
+        $this->db->insert_record('course_categories_domains', $activeDomain1, false);
+        $this->db->insert_record('course_categories_domains', $activeDomain2, false);
+        
+        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@test1.com']);
+        $userstotest = [$user1];
+        $this->set_user_info_data($user1->id, $category1->name);
+
+        $this->categoriesdomainsservice->link_categories_to_users($userstotest, null);
+
+        $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
+
+        $this->assertEquals($category1->name, $user1linkentity->categoryname);
+     }
+    
+
+    /**
+     * Test linking users to course categories (entities) based on their emails.
+     * Case: Many course-categories could be set to the user, the user alreadty has a valid entity
+     */
+
+     public function test_link_categories_to_users_multiple_choices_valid_enity()
+     {
+        global $CFG;
+
+        $CFG->allowemailaddresses = 'test1.com test2.com';
+
+        $category1 = $this->getDataGenerator()->create_category();
+        $category2 = $this->getDataGenerator()->create_category();
+        
+
+        $activeDomain1 = (object) [
+            'course_categories_id' => $category1->id,
+            'domain_name' => 'test1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $activeDomain2 = (object) [
+            'course_categories_id' => $category2->id,
+            'domain_name' => 'test1.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+
+        $this->db->insert_record('course_categories_domains', $activeDomain1, false);
+        $this->db->insert_record('course_categories_domains', $activeDomain2, false);
+
+        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@test1.com']);
+        $this->set_user_info_data($user1->id);
+        
+        $userstotest = [$user1];
+
+        $this->categoriesdomainsservice->link_categories_to_users($userstotest, null);
+
+        $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
+        $this->assertEquals("", $user1linkentity->categoryname);
+     }
 }
