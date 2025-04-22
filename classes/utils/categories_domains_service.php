@@ -178,7 +178,7 @@ class categories_domains_service
         foreach ($userstoupdate as $userid) {
             toggle_external_user_role($userid, $setexternalrole);
 
-            $isexternal = $this->db->get_record('role_assignments', ['userid' => $userid, 'roleid' => $externalrole->id]);
+            $isexternal = $this->db->get_records('role_assignments', ['userid' => $userid, 'roleid' => $externalrole->id]);
             if ($isexternal && $setexternalrole) {
                 $dbinterface->set_profile_field_value($userid, 'roleMentor', $externalrole->shortname);
             }
