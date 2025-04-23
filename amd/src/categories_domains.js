@@ -54,10 +54,10 @@ define([
                 oLanguage: {
                     sUrl: M.cfg.wwwroot + '/local/mentor_core/datatables/lang/' + M.util.get_string('langfile', 'local_categories_domains') + ".json"
                 },
-                columnDefs: [{
+                columnDefs:  user_can_manage_domains ? [{
                     orderable: false, 
                     targets: 1 
-                }],
+                }] : [],
                 columns: user_can_manage_domains ? 
                     [
                         {data: 'domain_name'},
