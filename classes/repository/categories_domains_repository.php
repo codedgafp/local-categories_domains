@@ -24,7 +24,7 @@ class categories_domains_repository
         global $DB;
         $this->db = $DB;
     }
-    
+
     /**
      * Get all the active domains by the category ID, order by created_at column DESC by default
      * 
@@ -224,13 +224,14 @@ class categories_domains_repository
      */
     public function update_users_course_category(string $categoryname, array $users): void
     {
-        if (empty($users)) return;
+        if (empty($users))
+            return;
         [$whereclause, $params] = $this->db->get_in_or_equal(
             $users,
             SQL_PARAMS_NAMED,
             'userid'
         );
-        
+
         $sql = "UPDATE {user_info_data}
                 SET data = :categoryname
                 WHERE userid $whereclause
@@ -354,5 +355,71 @@ class categories_domains_repository
         $params = array_merge($paramsusers, $paramscategories, $params);
 
         return $this->db->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Get only the users who don't have the data of his mainentity
+     * 
+     * @param array $usersid
+     * @return array
+     */
+    public function get_only_users_no_info_field_mainentity_data(array $usersid): array
+    {
+        [$whereclause, $params] = $this->db->get_in_or_equal(
+            $usersid,
+            SQL_PARAMS_NAMED,
+            'userid'
+        );
+
+        $sql = "SELECT DISTINCT(u.id)
+                FROM {user} u
+                INNER JOIN {user_info_data} uid ON uid.userid = u.id
+                INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
+                WHERE u.id $whereclause
+                ";
+
+        $params['fieldname'] = 'mainentity';
+
+        $result = array_map(
+            fn($user): int => $user->id,
+            $this->db->get_records_sql(
+                $sql,
+                $params
+            )
+        );
+
+        return array_diff($usersid, $result);
+    }
+
+    /**
+     * Create the mainentity data line for all the given users
+     * 
+     * @param array $users
+     * @return void
+     */
+    public function insert_user_info_data_main_entity(array $users): void
+    {
+        $mainentityfield = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
+
+        $params = [];
+
+        $valuesclause = implode(
+            ", ",
+            array_map(function ($index, $userid) use (&$params, $mainentityfield): string {
+                $paramsuser = "userid$index";
+                $paramsfield = "mainentityfield$index";
+
+                $params[$paramsuser] = $userid;
+                $params[$paramsfield] = $mainentityfield->id;
+
+                return "(:$paramsuser, :$paramsfield, '', 0)";
+            }, array_keys($users), $users)
+        );
+
+        $sql = "INSERT INTO {user_info_data} (userid, fieldid, data, dataformat)
+                VALUES $valuesclause
+                ";
+
+        $this->db->execute($sql, $params);
     }
 }

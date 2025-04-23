@@ -484,22 +484,23 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     /**
      * Test get active domains by search value
      */
-    public function test_get_active_domains_by_serach_value() {
+    public function test_get_active_domains_by_serach_value()
+    {
         $category = $this->getDataGenerator()->create_category();
-        
-        $domain1 = (object)[
+
+        $domain1 = (object) [
             'course_categories_id' => $category->id,
             'domain_name' => 'domain1.com',
             'created_at' => time(),
             'disabled_at' => null
         ];
-        $domain2 = (object)[
+        $domain2 = (object) [
             'course_categories_id' => $category->id,
             'domain_name' => 'domain2.com',
             'created_at' => time(),
             'disabled_at' => null
         ];
-        
+
         $this->db->insert_record('course_categories_domains', $domain1, false);
         $this->db->insert_record('course_categories_domains', $domain2, false);
 
@@ -512,11 +513,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
     /**
      * Test get all domains
-     *
-     * @throws ReflectionException
-     * @throws coding_exception
-     * @throws dml_exception
-     * @throws moodle_exception
      */
     public function test_get_all_domains()
     {
@@ -548,11 +544,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
     /**
      * Test reactivating a domain
-     *
-     * @throws ReflectionException
-     * @throws coding_exception
-     * @throws dml_exception
-     * @throws moodle_exception
      */
     public function test_reactivate_domain()
     {
@@ -575,11 +566,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
     /**
      * Test get all activated domains
-     *
-     * @throws ReflectionException
-     * @throws coding_exception
-     * @throws dml_exception
-     * @throws moodle_exception
      */
     public function test_get_all_activated_domains()
     {
@@ -650,13 +636,9 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $activeDomain3, false);
 
         $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@user.archi.fr']);
-        $this->set_user_info_data($user1->id);
         $user2 = $this->getDataGenerator()->create_user(['email' => 'user1@user.interieur.gouv.fr']);
-        $this->set_user_info_data($user2->id);
         $user3 = $this->getDataGenerator()->create_user(['email' => 'user1@ira-nantes.fr']);
-        $this->set_user_info_data($user3->id);
         $user4 = $this->getDataGenerator()->create_user(['email' => 'user1@user.baddomain.fr']);
-        $this->set_user_info_data($user4->id);
         $userstotest = [$user1, $user2, $user3, $user4];
 
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
@@ -714,14 +696,11 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $activeDomain3, false);
 
         $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@user.archi.fr']);
-        $this->set_user_info_data($user1->id);
-        $user2 = $this->getDataGenerator()->create_user(['email' => 'user1@user.interieur.gouv.fr']);
-        $this->set_user_info_data($user2->id);
-        $user3 = $this->getDataGenerator()->create_user(['email' => 'user1@ira-nantes.fr']);
-        $this->set_user_info_data($user3->id);
-        $user4 = $this->getDataGenerator()->create_user(['email' => 'user1@user.baddomain.fr']);
-        $this->set_user_info_data($user4->id);
-        $userstotest = [$user1, $user2, $user3, $user4];
+        $user2 = $this->getDataGenerator()->create_user(['email' => 'user2@user.archi.fr']);
+        $user3 = $this->getDataGenerator()->create_user(['email' => 'user3@user.interieur.gouv.fr']);
+        $user4 = $this->getDataGenerator()->create_user(['email' => 'user4@ira-nantes.fr']);
+        $user5 = $this->getDataGenerator()->create_user(['email' => 'user5@user.baddomain.fr']);
+        $userstotest = [$user1, $user2, $user3, $user4, $user5];
 
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
 
@@ -731,16 +710,19 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertEquals($category1->name, $user1linkentity->categoryname);
 
         $user2linkentity = $this->categoriesdomainsrepository->get_user_link_category($user2->id);
-        $this->assertEquals('', $user2linkentity->categoryname);
+        $this->assertEquals($category1->name, $user2linkentity->categoryname);
+
+        $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
+        $this->assertEquals('', $user3linkentity->categoryname);
 
         $defaultcategory = \local_mentor_specialization\mentor_entity::get_default_entity();
-        $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
-        $this->assertEquals($defaultcategory->name, $user3linkentity->categoryname);
-
         $user4linkentity = $this->categoriesdomainsrepository->get_user_link_category($user4->id);
-        $this->assertEquals($maincategory->name, $user4linkentity->categoryname);
-        $isuser4external = $this->db->get_record('role_assignments', ['userid' => $user4->id, 'roleid' => $externalrole->id]);
-        $this->assertTrue(!empty($isuser4external));
+        $this->assertEquals($defaultcategory->name, $user4linkentity->categoryname);
+
+        $user5linkentity = $this->categoriesdomainsrepository->get_user_link_category($user5->id);
+        $this->assertEquals($maincategory->name, $user5linkentity->categoryname);
+        $isuser5external = $this->db->get_record('role_assignments', ['userid' => $user5->id, 'roleid' => $externalrole->id]);
+        $this->assertTrue(!empty($isuser5external));
     }
 
     public function test_link_categories_to_users_no_users()
@@ -780,30 +762,12 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertTrue($result === true);
     }
 
-    private function set_user_info_data(int $userid, string $categoryname = ''): void
-    {
-        $mainentityfield = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
-
-        $sql = "INSERT INTO {user_info_data} (userid, fieldid, data, dataformat)
-                VALUES (:userid, :mainentityfield, :categoryname, 0)
-                ";
-        $params = [
-            'userid' => $userid,
-            'mainentityfield' => $mainentityfield->id,
-            'categoryname' => $categoryname
-        ];
-
-        $this->db->execute($sql, $params);
-    }
-
-
     /**
      * Test linking users to course categories (entities) based on their emails.
      * Case: Many course-categories could be set to the user, the user has an invalid entity
      */
-
-     public function test_link_categories_to_users_multiple_choices_invalid_enity()
-     {
+    public function test_link_categories_to_users_multiple_choices_invalid_enity()
+    {
         global $CFG;
 
         $CFG->allowemailaddresses = 'test1.com test2.com';
@@ -826,33 +790,29 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $this->db->insert_record('course_categories_domains', $activeDomain1, false);
         $this->db->insert_record('course_categories_domains', $activeDomain2, false);
-        
-        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@test1.com']);
-        $userstotest = [$user1];
-        $this->set_user_info_data($user1->id, $category1->name);
 
-        $this->categoriesdomainsservice->link_categories_to_users($userstotest, null);
+        // link_categories_to_users() function trigged by observer on user created
+        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@test1.com']);
+
+        $this->categoriesdomainsrepository->update_users_course_category($category1->name, [$user1->id]);
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
 
         $this->assertEquals($category1->name, $user1linkentity->categoryname);
-     }
-    
+    }
 
     /**
      * Test linking users to course categories (entities) based on their emails.
      * Case: Many course-categories could be set to the user, the user alreadty has a valid entity
      */
-
-     public function test_link_categories_to_users_multiple_choices_valid_enity()
-     {
+    public function test_link_categories_to_users_multiple_choices_valid_enity()
+    {
         global $CFG;
 
         $CFG->allowemailaddresses = 'test1.com test2.com';
 
         $category1 = $this->getDataGenerator()->create_category();
         $category2 = $this->getDataGenerator()->create_category();
-        
 
         $activeDomain1 = (object) [
             'course_categories_id' => $category1->id,
@@ -870,14 +830,10 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $activeDomain1, false);
         $this->db->insert_record('course_categories_domains', $activeDomain2, false);
 
+        // link_categories_to_users() function trigged by observer on user created
         $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@test1.com']);
-        $this->set_user_info_data($user1->id);
-        
-        $userstotest = [$user1];
-
-        $this->categoriesdomainsservice->link_categories_to_users($userstotest, null);
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
         $this->assertEquals("", $user1linkentity->categoryname);
-     }
+    }
 }

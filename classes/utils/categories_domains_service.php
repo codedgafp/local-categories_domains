@@ -42,6 +42,11 @@ class categories_domains_service
         foreach ($domainsdata as $domain) {
             $userstoupdate = $this->get_users_to_update($users, $domain['domainname']);
 
+            $usersnomainentityfield = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data($userstoupdate);
+            if ($usersnomainentityfield) {
+                $this->categoriesdomainsrepository->insert_user_info_data_main_entity($usersnomainentityfield);
+            }
+
             if ($domain['iswhitelist'] == false) {
                 // RG01-MEN-474
                 $categorytoset = $defaultcategory;
@@ -53,16 +58,16 @@ class categories_domains_service
                 // RG01-MEN-474
 
                 $this->update_domain_users($categorytoset, $userstoupdate, true);
-
                 continue;
             }
 
             $categoriesbydomain = $this->categoriesdomainsrepository->get_course_categories_by_domain($domain['domainname'], $defaultcategory);
+
             if (count($categoriesbydomain) > 1) {
                 $categoriesname = array_map(fn($category): string => $category->name , $categoriesbydomain);
 
                 $userstoupdatearray = $this->categoriesdomainsrepository->get_users_missmatch_categories($userstoupdate, $categoriesname);
-                
+
                 if ($userstoupdatearray) {
                     $userstoupdate = array_map(fn($user): string => $user->id, $userstoupdatearray);
 
