@@ -148,20 +148,28 @@ class categories_domains_repository
     }
 
     /**
-     * Check if the domain already exists for the same entity
+     * Check if the domain already exists, can link an entity
      * 
      * @param domain_name $domain The domain name to check
      * @return bool True if domain exists
      */
     public function is_domain_exists(domain_name $domain): bool
     {
-        return $this->db->record_exists_sql(
-            "SELECT 1 FROM {course_categories_domains} 
-            WHERE domain_name = :domainname
-            AND course_categories_id = :entity
-            AND disabled_at IS NULL",
-            ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
-        );
+        $whereclause = "";
+        if (isset($domain->course_categories_id)) {
+            $whereclause = " AND course_categories_id = :entity";
+            $params['entity'] = $domain->course_categories_id;
+        }
+
+        $sql = "SELECT 1 FROM {course_categories_domains} 
+                WHERE domain_name = :domainname
+                AND disabled_at IS NULL
+                $whereclause
+                ";
+
+        $params['domainname'] = $domain->domain_name;
+
+        return $this->db->record_exists_sql($sql, $params);
     }
 
     /**
@@ -485,11 +493,28 @@ class categories_domains_repository
      * @param string $domainname
      * @return array
      */
-    public function get_all_users_by_domain_name(string $domainname): array
+    public function get_all_users_by_domain_name(string $domainname, bool $arevalid = false): array
     {
-        $sql = "SELECT *
-                FROM {user} 
-                WHERE email ~* CONCAT('@.*', REGEXP_REPLACE(?::text, '^[\\.]+', ''), '$')";
+        $whereclause = "";
+
+        if ($arevalid) {
+            $whereclause = " 
+                AND email LIKE '%_@_%.__%'
+                AND confirmed = 1
+                AND deleted = 0
+                ";
+        }
+
+        $regex = "CONCAT('@', :domainname::text, '$')";
+        if (substr($domainname, 0, 1) === '.') {
+            $regex = "CONCAT('@.*', :domainname::text, '$')";
+        }
+
+        $sql = "SELECT id, email
+                FROM {user}
+                WHERE email ~* $regex
+                $whereclause
+                ";
 
         $params['domainname'] = $domainname;
 
