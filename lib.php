@@ -118,7 +118,12 @@ function local_categories_domains_import_domains(array $content)
         if ($index == 0) {
             continue;
         }
-
+        $entity = \local_mentor_core\entity_api::get_main_entity_by_shortname($columns[1]);
+        $entity = new \local_mentor_specialization\mentor_entity($entity->id);
+        if(!$entity->can_be_main_entity())
+        {
+            continue;
+        }
         $domain = new domain_name();
         $domain->domain_name = trim(strtolower($columns[0]));
         $domain->course_categories_id = \local_mentor_core\entity_api::get_main_entity_by_shortname($columns[1])->id;

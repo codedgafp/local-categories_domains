@@ -136,6 +136,33 @@ class lib_testcase extends advanced_testcase
         $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category2) {
             return $domain->domain_name === 'test.com' && $domain->course_categories_id == $category2->id && $domain->disabled_at === null;
         }));
+
+        //Test the case where : add domain to a not main entity ( should be ignored)
+        // Create categorie for testing.
+        $category3 = $this->getDataGenerator()->create_category(['idnumber' => 'entity3','can_be_main_entity'=>0]);
+        //update the entity to be not main entity
+        $entity = new \local_mentor_specialization\mentor_entity($category3->id);
+        $entity->update_can_be_main_entity(false);
+
+        $reactivateContent = [
+            'domain_name;idnumber',
+            'example.com;entity1',
+            'test.com;entity2',
+             'test.com;entity3'
+        ];
+
+        $reactivateResult = local_categories_domains_import_domains($reactivateContent);
+        $this->assertTrue($reactivateResult);
+
+        $getDomains = $DB->get_records('course_categories_domains');
+        $this->assertCount(2, $getDomains);
+
+        $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category1) {
+            return $domain->domain_name === 'example.com' && $domain->course_categories_id == $category1->id && $domain->disabled_at === null;
+        }));
+        $this->assertNotEmpty(array_filter($getDomains, function ($domain) use ($category2) {
+            return $domain->domain_name === 'test.com' && $domain->course_categories_id == $category2->id && $domain->disabled_at === null;
+        }));
     }
 
 
