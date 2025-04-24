@@ -10,6 +10,7 @@ define([
     'local_mentor_core/datatables-checkboxes',
     'local_mentor_core/mentor',
     'format_edadmin/format_edadmin',
+    'local_mentor_specialization/common',
 ], function ($) {
     var local_categories_domains = {
         /**
@@ -48,7 +49,7 @@ define([
                         d.action = 'get_categories_domains';
                         d.format = 'json';
                         d.entityid = entityid;
-                        d.search = d.search.value;
+                        d.search = d.search && d.search.value ? d.search.value : null;
                     }
                 },
                 oLanguage: {
@@ -75,7 +76,9 @@ define([
                         },
                     ] : [{ data: 'domain_name' }],
                 //To create header buttons
-                dom: 'Bfrtip',
+                dom: 'Bfrtip',                
+                language: { search: ""},
+                search: {return: true},
                 //Header buttons
                 buttons: user_can_manage_domains ?
                     [{
@@ -98,6 +101,7 @@ define([
                     }
                 }] : [])
                 : [],
+                initComplete: () => { addSearchButton("domains-table_filter") }
             });
         },
 
