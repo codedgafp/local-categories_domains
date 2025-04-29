@@ -33,12 +33,13 @@ class categories_domains_controller extends controller_base
         $entityid = $this->get_param('entityid', PARAM_INT);
         $order = $this->get_param('order');
         $orderdir = $order[0]['dir'] ?? "DESC";
+        $orderBy = isset($order[0]['column']) ? ($order[0]['column'] === 0 ? "domain_name" : "created_at") : "created_at";
 
         if (empty($entityid)) {
             throw new \moodle_exception('entityidnotset', 'error');
         }
 
-        $domainsbycategory = categories_domains_repository::get_active_domains_by_category($entityid, $orderdir);
+        $domainsbycategory = categories_domains_repository::get_active_domains_by_category($entityid, $orderdir, $orderBy);
 
         $tablearray = [];
         $categoriesDomainsRenderer = $PAGE->get_renderer('local_categories_domains', 'categories_domains');

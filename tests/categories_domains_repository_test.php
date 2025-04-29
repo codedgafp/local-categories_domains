@@ -238,6 +238,57 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $domain4->domain_name = 'subdomain.com.com';
         $this->assertFalse($domain4->is_whitelisted());
     }
+    /**
+     * Test get_active_domains_by_category with order by domain_name
+     *
+     * @throws ReflectionException
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @covers \local_categories_domains\categories_domains_repository::get_active_domains_by_category
+     */
+    public function test_get_active_domains_order_by_domain_name() {
+        $this->resetAllData();
+        $category = $this->getDataGenerator()->create_category();
+        
+        $domain1 = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'zdomain.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $domain2 = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'adomain.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        
+        $this->db->insert_record('course_categories_domains', $domain1, false);
+        $this->db->insert_record('course_categories_domains', $domain2, false);
+
+        $result = categories_domains_repository::get_active_domains_by_category($category->id, "ASC", "domain_name");
+        $this->assertCount(2, $result);
+        $this->assertEquals('adomain.com', $result["adomain.com"]->domain_name);
+        $this->assertEquals('zdomain.com', $result["zdomain.com"]->domain_name);
+
+        //by default order by created_at desc
+        $domain3 = (object)[
+            'course_categories_id' => $category->id,
+            'domain_name' => 'sdomain.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        
+        $this->db->insert_record('course_categories_domains', $domain3, false);
+        $result = categories_domains_repository::get_active_domains_by_category($category->id);
+        $this->assertCount(3, $result);
+        $this->assertEquals('sdomain.com', $result["sdomain.com"]->domain_name);
+        $this->assertEquals('adomain.com', $result["adomain.com"]->domain_name);
+        $this->assertEquals('zdomain.com', $result["zdomain.com"]->domain_name);
+
+        $this->resetAllData();
+    }
 
 
         /**
