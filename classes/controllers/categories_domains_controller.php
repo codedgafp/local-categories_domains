@@ -102,6 +102,13 @@ class categories_domains_controller extends controller_base
             if (!$domain->is_whitelisted()) {
                 return ['status' => false, 'message' => get_string('domainnotwhitelisted', 'local_categories_domains')];
             }
+            
+            // Check if domain already exists for main entity && is DISABLED
+            if ( $repo->is_domain_disabled($domain))
+            {
+                $result =  $repo->reactivate_domain($domain);
+                return ['status' => true, 'message' => $result];
+            }
 
             // Check if domain already exists for main entity
             if ($domain->is_exist()) {

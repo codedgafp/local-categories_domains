@@ -21,7 +21,7 @@ class domain_name
 
     public int $created_at;
 
-    public int $disabled_at;
+    public ?int $disabled_at = null;
 
     public function __construct()
     {
@@ -63,5 +63,4 @@ class domain_name
         $categories_domains_repository = new categories_domains_repository();
         return $categories_domains_repository->is_domain_exists($this);
     }
-
 }

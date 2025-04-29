@@ -121,4 +121,43 @@ class categories_domains_repository
     public function add_domain(domain_name $domain){
         return $this->db->insert_record_raw('course_categories_domains', $domain, false);
     }
+
+
+        /**
+     * Check if the domain already exists for the same entity and disabled
+     * 
+     * @param domain_name $domain The domain name to check
+     * @return bool True if domain exists
+     */
+    public function is_domain_disabled(domain_name $domain): bool
+    {
+            return $this->db->record_exists_sql(
+                "SELECT 1 FROM {course_categories_domains} 
+                WHERE domain_name = :domainname
+                AND course_categories_id = :entity
+                AND disabled_at IS NOT NULL",
+                ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
+            );
+    }
+
+    public function reactivate_domain(domain_name $domain): bool
+    {
+
+        global $DB;
+
+        $sql = "UPDATE {course_categories_domains}
+                SET disabled_at = null
+                WHERE course_categories_id = :coursecategoryid 
+                  AND domain_name = :domain_name
+                ";
+
+        $params["coursecategoryid"] = $domain->course_categories_id;
+        $params["domain_name"] = $domain->domain_name;
+
+        try {
+            return $DB->execute($sql, $params);
+        } catch (\dml_exception $e) {
+            throw new \moodle_exception('errordeletingdomain', 'local_categories_domains', '', $e->getMessage());
+        }
+    }
 }

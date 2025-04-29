@@ -239,4 +239,79 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertFalse($domain4->is_whitelisted());
     }
 
+
+        /**
+     * Test is_domain_disabled returns true for a disabled domain
+     *
+     * @throws dml_exception
+     */
+    public function test_is_domain_disabled_true() {
+        $category = $this->getDataGenerator()->create_category();
+
+        $domain = new domain_name();
+        $domain->course_categories_id = $category->id;
+        $domain->domain_name = 'disabled.com';
+        $domain->created_at = time();
+        $domain->disabled_at = time();
+
+        $this->db->insert_record('course_categories_domains', $domain, false);
+
+        $result = $this->categoriesDomainsRepository->is_domain_disabled($domain);
+
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Test is_domain_disabled returns false for an active domain
+     *
+     * @throws dml_exception
+     */
+    public function test_is_domain_disabled_false() {
+        $category = $this->getDataGenerator()->create_category();
+
+        $domain = new domain_name();
+        $domain->course_categories_id = $category->id;
+        $domain->domain_name = 'active.com';
+        $domain->created_at = time();
+        $domain->disabled_at = null;
+        
+        $this->db->insert_record('course_categories_domains', $domain, false);
+
+        $result = $this->categoriesDomainsRepository->is_domain_disabled($domain);
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Test reactivate_domain reactivates a disabled domain
+     *
+     * @throws dml_exception
+     */
+    public function test_reactivate_domain() {
+        // Create a category.
+        $category = $this->getDataGenerator()->create_category();
+
+        // Insert a disabled domain.
+        $domain = new domain_name();
+        $domain->course_categories_id = $category->id;
+        $domain->domain_name = 'disabled.com';
+        $domain->created_at = time();
+        $domain->disabled_at = time();
+
+        $this->db->insert_record('course_categories_domains', $domain, false);
+
+        // Reactivate the domain.
+        $result = $this->categoriesDomainsRepository->reactivate_domain($domain);
+
+        // Assert the reactivation was successful.
+        $this->assertTrue($result);
+
+        // Fetch the domain from the database.
+        $reactivatedDomain = $this->db->get_record('course_categories_domains', ['domain_name' => $domain->domain_name]);
+
+        // Assert the domain is no longer disabled.
+        $this->assertNull($reactivatedDomain->disabled_at);
+    }
+
+
 }
