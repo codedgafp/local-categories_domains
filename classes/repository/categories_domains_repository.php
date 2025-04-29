@@ -297,12 +297,14 @@ class categories_domains_repository
      */
     public function get_all_active_categories_domains(): array
     {
-        $sql = "SELECT ccd.domain_name domain_name, cc.idnumber idnumber
+        $sql = "SELECT 
+        ROW_NUMBER() OVER (ORDER BY ccd.domain_name ASC, ccd.course_categories_id ASC) AS ligne,
+        ccd.domain_name domain_name, cc.idnumber idnumber
                 FROM {course_categories_domains} ccd
-                JOIN {course_categories} cc ON cc.id = ccd.course_categories_id
-                AND ccd.disabled_at IS NULL
+                JOIN {course_categories} cc ON cc.id = ccd.course_categories_id 
+                WHERE ccd.disabled_at IS NULL
                 ";
-        return $this->db->get_records_sql($sql);
+        return array_values($this->db->get_records_sql($sql));
     }
 
     public function get_user_link_category(int $userid)

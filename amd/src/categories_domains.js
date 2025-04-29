@@ -235,14 +235,12 @@ define([
             // Add CSV Headers
             var headers = M.util.get_string('headers_export_csv_domains', 'local_categories_domains');
             csv += headers.join(';') + '\n';
-            
+
             // Add CSV data
-            for (const domainKey in domains) {
-                if (domains.hasOwnProperty(domainKey)) {
-                    const item = domains[domainKey];
-                    csv += domainKey + ';' + (item.idnumber || '') + '\n';
-                }
-            }            
+            domains.forEach(domain => {
+                csv += domain.domain_name + ';' + (domain.idnumber || '') + '\n';
+            });
+            
 
             var dateobject = new Date();
             var dateformat = dateobject.getFullYear() + '-' + ('0' + (dateobject.getMonth() + 1)).slice(-2) + '-' + ('0' + dateobject.getDate()).slice(-2);

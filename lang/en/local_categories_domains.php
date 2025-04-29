@@ -48,4 +48,4 @@ $string['errorimport'] = 'Une erreur a été détectée dans le fichier à la li
 $string['domainsimported'] = 'Import effectué';
 
 // Export CSV
-$string['headers_export_csv_domains'] = ['nom de domaine', 'nom court de l\'entité'];
+$string['headers_export_csv_domains'] = ['domain_name', 'idnumber'];
