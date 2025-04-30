@@ -662,27 +662,31 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     {
         global $CFG;
 
+        $this::setAdminUser();
+
         $CFG->allowemailaddresses = '.archi.fr .interieur.gouv.fr ira-nantes.fr';
 
-        $category1 = $this->getDataGenerator()->create_category();
-        $category2 = $this->getDataGenerator()->create_category();
+        $categoryname1 = 'category1';
+        $categoryname2 = 'category2';
+        $categoryid1 = \local_mentor_core\entity_api::create_entity(['name' => $categoryname1, 'shortname' => $categoryname1]);
+        $categoryid2 = \local_mentor_core\entity_api::create_entity(['name' => $categoryname2, 'shortname' => $categoryname2]);
 
         $maincategory = $this->getDataGenerator()->create_category();
 
         $activeDomain1 = (object) [
-            'course_categories_id' => $category1->id,
+            'course_categories_id' => $categoryid1,
             'domain_name' => '.archi.fr',
             'created_at' => time(),
             'disabled_at' => null
         ];
         $activeDomain2 = (object) [
-            'course_categories_id' => $category1->id,
+            'course_categories_id' => $categoryid1,
             'domain_name' => '.interieur.gouv.fr',
             'created_at' => time(),
             'disabled_at' => null
         ];
         $activeDomain3 = (object) [
-            'course_categories_id' => $category2->id,
+            'course_categories_id' => $categoryid2,
             'domain_name' => '.interieur.gouv.fr',
             'created_at' => time(),
             'disabled_at' => null
@@ -708,10 +712,10 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->categoriesdomainsservice->link_categories_to_users($userstotest, $maincategory);
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
-        $this->assertEquals($category1->name, $user1linkentity->categoryname);
+        $this->assertEquals($categoryname1, $user1linkentity->categoryname);
 
         $user2linkentity = $this->categoriesdomainsrepository->get_user_link_category($user2->id);
-        $this->assertEquals($category1->name, $user2linkentity->categoryname);
+        $this->assertEquals($categoryname1, $user2linkentity->categoryname);
 
         $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
         $this->assertEquals('', $user3linkentity->categoryname);

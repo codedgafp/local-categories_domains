@@ -80,8 +80,8 @@ class lib_testcase extends advanced_testcase
         ];
 
         // Create actual categories for testing.
-        $category1 = $this->getDataGenerator()->create_category(['idnumber' => 'entity1']);
-        $category2 = $this->getDataGenerator()->create_category(['idnumber' => 'entity2']);
+        $category1 = $this->getDataGenerator()->create_category(['idnumber' => 'entity1', 'shortname' => 'entity1']);
+        $category2 = $this->getDataGenerator()->create_category(['idnumber' => 'entity2', 'shortname' => 'entity1']);
 
         // Call the function.
         $result = local_categories_domains_import_domains($content);
@@ -139,7 +139,7 @@ class lib_testcase extends advanced_testcase
 
         //Test the case where : add domain to a not main entity ( should be ignored)
         // Create categorie for testing.
-        $category3 = $this->getDataGenerator()->create_category(['idnumber' => 'entity3','can_be_main_entity'=>0]);
+        $category3 = $this->getDataGenerator()->create_category(['idnumber' => 'entity3','can_be_main_entity'=>0, 'shortname' => 'entity3']);
         //update the entity to be not main entity
         $entity = new \local_mentor_specialization\mentor_entity($category3->id);
         $entity->update_can_be_main_entity(false);
