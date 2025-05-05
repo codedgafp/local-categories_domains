@@ -226,6 +226,7 @@ class categories_domains_repository
     {
         if (empty($users))
             return;
+
         [$whereclause, $params] = $this->db->get_in_or_equal(
             $users,
             SQL_PARAMS_NAMED,
@@ -378,6 +379,41 @@ class categories_domains_repository
                 INNER JOIN {user_info_data} uid ON uid.userid = u.id
                 INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
                 WHERE u.id $whereclause
+                ";
+
+        $params['fieldname'] = 'mainentity';
+
+        $result = array_map(
+            fn($user): int => $user->id,
+            $this->db->get_records_sql(
+                $sql,
+                $params
+            )
+        );
+
+        return array_diff($usersid, $result);
+    }
+
+    /**
+     * Get only the users who don't have the data in mainentity field
+     * 
+     * @param array $usersid
+     * @return array
+     */
+    public function get_only_users_no_info_data_mainentity(array $usersid): array
+    {
+        [$whereclause, $params] = $this->db->get_in_or_equal(
+            $usersid,
+            SQL_PARAMS_NAMED,
+            'userid'
+        );
+
+        $sql = "SELECT DISTINCT(u.id)
+                FROM {user} u
+                INNER JOIN {user_info_data} uid ON uid.userid = u.id
+                INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
+                WHERE u.id $whereclause
+                AND uid.data IS NOT NULL AND uid.data <> ''
                 ";
 
         $params['fieldname'] = 'mainentity';

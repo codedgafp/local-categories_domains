@@ -639,11 +639,8 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $user2 = $this->getDataGenerator()->create_user(['email' => 'user1@user.interieur.gouv.fr']);
         $user3 = $this->getDataGenerator()->create_user(['email' => 'user1@ira-nantes.fr']);
         $user4 = $this->getDataGenerator()->create_user(['email' => 'user1@user.baddomain.fr']);
-        $userstotest = [$user1, $user2, $user3, $user4];
 
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
-
-        $this->categoriesdomainsservice->link_categories_to_users($userstotest);
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
         $this->assertEquals($category1->name, $user1linkentity->categoryname);
@@ -700,10 +697,14 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $user3 = $this->getDataGenerator()->create_user(['email' => 'user3@user.interieur.gouv.fr']);
         $user4 = $this->getDataGenerator()->create_user(['email' => 'user4@ira-nantes.fr']);
         $user5 = $this->getDataGenerator()->create_user(['email' => 'user5@user.baddomain.fr']);
-        $userstotest = [$user1, $user2, $user3, $user4, $user5];
+
+        // Reset all linked users categories to empty
+        $userstoreset = [$user1->id, $user2->id, $user3->id, $user4->id, $user5->id];
+        $this->categoriesdomainsrepository->update_users_course_category("", $userstoreset);
 
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
 
+        $userstotest = [$user1, $user2, $user3, $user4, $user5];
         $this->categoriesdomainsservice->link_categories_to_users($userstotest, $maincategory);
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);

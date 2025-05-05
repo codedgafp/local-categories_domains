@@ -58,6 +58,7 @@ class categories_domains_service
                 // RG01-MEN-474
 
                 $this->update_domain_users($categorytoset, $userstoupdate, true);
+
                 continue;
             }
 
@@ -131,7 +132,7 @@ class categories_domains_service
         $domain = new domain_name();
         $domain->set_user_domain($email);
         $emailDomain = $domain->domain_name;
-        $courseCategories = $this->categoriesdomainsrepository->get_course_categories_by_domain($emailDomain, \local_mentor_specialization\mentor_entity::get_default_entity());
+        $courseCategories = $this->categoriesdomainsrepository->get_course_categories_by_domain($emailDomain, mentor_entity::get_default_entity());
 
         $courseCategories = array_map(fn($entity): string => $entity->name, $courseCategories);
 
@@ -161,6 +162,12 @@ class categories_domains_service
                 $dbinterface->set_profile_field_value($userid, 'roleMentor', $externalrole->shortname);
             }
         }
+
+        // RG03-MEN-474
+        if ($setexternalrole === true) {
+            $userstoupdate = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity($userstoupdate);
+        }
+        // RG03-MEN-474
 
         $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
     }
