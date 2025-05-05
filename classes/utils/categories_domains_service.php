@@ -16,7 +16,6 @@ class categories_domains_service
     public $categoriesdomainsrepository;
     public $db;
 
-
     public function __construct()
     {
         global $DB;
@@ -57,15 +56,18 @@ class categories_domains_service
                 }
                 // RG01-MEN-474
 
-                $this->update_domain_users($categorytoset, $userstoupdate, true);
+                $this->manage_users_external_role($userstoupdate, true);
+                $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
 
                 continue;
             }
 
+            $this->manage_users_external_role($userstoupdate, false);
+
             $categoriesbydomain = $this->categoriesdomainsrepository->get_course_categories_by_domain($domain['domainname'], $defaultcategory);
 
             if (count($categoriesbydomain) > 1) {
-                $categoriesname = array_map(fn($category): string => $category->name , $categoriesbydomain);
+                $categoriesname = array_map(fn($category): string => $category->name, $categoriesbydomain);
 
                 $userstoupdatearray = $this->categoriesdomainsrepository->get_users_missmatch_categories($userstoupdate, $categoriesname);
 
@@ -74,13 +76,14 @@ class categories_domains_service
 
                     $emptycoursecategory = new \stdClass();
                     $emptycoursecategory->name = "";
-                    $this->update_domain_users($emptycoursecategory, $userstoupdate, true);
+                    $this->categoriesdomainsrepository->update_users_course_category($emptycoursecategory->name, $userstoupdate);
                 }
 
                 continue;
             }
 
-            $this->update_domain_users(reset($categoriesbydomain), $userstoupdate, false);
+            $categoryname = reset($categoriesbydomain)->name;
+            $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
         }
 
         return true;
@@ -142,14 +145,15 @@ class categories_domains_service
     }
 
     /**
-     * Update all the users linked entity and the external role
+     * Set or unset the external role of users to update
+     * If 'setexternalrole' is set at true, the 'userstoupdate' array is updated
+     * to contain only users who do not yet have a main entity
      * 
-     * @param \stdClass|core_course_category $categorytoset
      * @param array $userstoupdate
      * @param bool $setexternalrole
      * @return void
      */
-    private function update_domain_users(\stdClass|core_course_category $categorytoset, array $userstoupdate, bool $setexternalrole): void
+    private function manage_users_external_role(array &$userstoupdate, bool $setexternalrole)
     {
         $dbinterface = \local_mentor_core\database_interface::get_instance();
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
@@ -168,7 +172,5 @@ class categories_domains_service
             $userstoupdate = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity($userstoupdate);
         }
         // RG03-MEN-474
-
-        $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
     }
 }
