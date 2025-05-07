@@ -32,13 +32,12 @@ class categories_domains_repository
      * @param string $orderdir
      * @return array
      */
-     public function get_active_domains_by_category(int $coursecategoryid,string $orderdir = "DESC", string $orderBy = "created_at", ?string $search = null): array
+    public function get_active_domains_by_category(int $coursecategoryid,string $orderdir = "DESC", string $orderBy = "created_at", ?string $search = null): array
     {   
         $sql = "SELECT ccd.domain_name
                 FROM {course_categories_domains} ccd
                 WHERE ccd.course_categories_id = :coursecategoryid
                 AND ccd.disabled_at IS NULL
-                ORDER BY ccd.$orderBy $orderdir
                 ";
         $params["coursecategoryid"] = $coursecategoryid;
 
@@ -46,7 +45,7 @@ class categories_domains_repository
             $sql .= $this->apply_search_conditions($params, $search);
         }
 
-        $sql .= "ORDER BY ccd.created_at $orderdir";
+        $sql .= "ORDER BY ccd.$orderBy $orderdir";
 
         return $this->db->get_records_sql($sql, $params);
     }
@@ -191,27 +190,6 @@ class categories_domains_repository
                 AND disabled_at IS NOT NULL",
                 ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
             );
-    }
-
-    public function reactivate_domain(domain_name $domain): bool
-    {
-
-        global $DB;
-
-        $sql = "UPDATE {course_categories_domains}
-                SET disabled_at = null
-                WHERE course_categories_id = :coursecategoryid 
-                  AND domain_name = :domain_name
-                ";
-
-        $params["coursecategoryid"] = $domain->course_categories_id;
-        $params["domain_name"] = $domain->domain_name;
-
-        try {
-            return $DB->execute($sql, $params);
-        } catch (\dml_exception $e) {
-            throw new \moodle_exception('errordeletingdomain', 'local_categories_domains', '', $e->getMessage());
-        }
     }
 
     /**

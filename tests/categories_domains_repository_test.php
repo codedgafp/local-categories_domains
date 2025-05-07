@@ -382,7 +382,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $domain1, false);
         $this->db->insert_record('course_categories_domains', $domain2, false);
 
-        $result = categories_domains_repository::get_active_domains_by_category($category->id, "ASC", "domain_name");
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id, "ASC", "domain_name");
         $this->assertCount(2, $result);
         $this->assertEquals('adomain.com', $result["adomain.com"]->domain_name);
         $this->assertEquals('zdomain.com', $result["zdomain.com"]->domain_name);
@@ -396,7 +396,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         ];
         
         $this->db->insert_record('course_categories_domains', $domain3, false);
-        $result = categories_domains_repository::get_active_domains_by_category($category->id);
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id);
         $this->assertCount(3, $result);
         $this->assertEquals('sdomain.com', $result["sdomain.com"]->domain_name);
         $this->assertEquals('adomain.com', $result["adomain.com"]->domain_name);
@@ -422,7 +422,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $this->db->insert_record('course_categories_domains', $domain, false);
 
-        $result = $this->categoriesDomainsRepository->is_domain_disabled($domain);
+        $result = $this->categoriesdomainsrepository->is_domain_disabled($domain);
 
         $this->assertTrue($result);
     }
@@ -443,43 +443,10 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         
         $this->db->insert_record('course_categories_domains', $domain, false);
 
-        $result = $this->categoriesDomainsRepository->is_domain_disabled($domain);
+        $result = $this->categoriesdomainsrepository->is_domain_disabled($domain);
 
         $this->assertFalse($result);
     }
-
-    /**
-     * Test reactivate_domain reactivates a disabled domain
-     *
-     * @throws dml_exception
-     */
-    public function test_reactivate_domain() {
-        // Create a category.
-        $category = $this->getDataGenerator()->create_category();
-
-        // Insert a disabled domain.
-        $domain = new domain_name();
-        $domain->course_categories_id = $category->id;
-        $domain->domain_name = 'disabled.com';
-        $domain->created_at = time();
-        $domain->disabled_at = time();
-
-        $this->db->insert_record('course_categories_domains', $domain, false);
-
-        // Reactivate the domain.
-        $result = $this->categoriesDomainsRepository->reactivate_domain($domain);
-
-        // Assert the reactivation was successful.
-        $this->assertTrue($result);
-
-        // Fetch the domain from the database.
-        $reactivatedDomain = $this->db->get_record('course_categories_domains', ['domain_name' => $domain->domain_name]);
-
-        // Assert the domain is no longer disabled.
-        $this->assertNull($reactivatedDomain->disabled_at);
-    }
-
-
 
     /**
      * Test get active domains by search value
@@ -504,7 +471,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db->insert_record('course_categories_domains', $domain1, false);
         $this->db->insert_record('course_categories_domains', $domain2, false);
 
-        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id, 'DESC', 'domain1');
+        $result = $this->categoriesdomainsrepository->get_active_domains_by_category($category->id, 'DESC', 'domain_name', 'domain1');
 
         $this->assertCount(1, $result);
         $this->assertTrue(in_array('domain1.com', array_column($result, 'domain_name')));

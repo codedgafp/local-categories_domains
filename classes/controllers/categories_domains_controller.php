@@ -49,7 +49,7 @@ class categories_domains_controller extends controller_base
         $entityid = $this->get_param('entityid', PARAM_INT);
         $order = $this->get_param('order');
         $orderdir = $order[0]['dir'] ?? "DESC";
-        $orderBy = isset($order[0]['column']) ? ($order[0]['column'] === 0 ? "domain_name" : "created_at") : "created_at";
+        $orderBy = isset($order[0]['column']) ? ($order[0]['column'] == 0 ? "domain_name" : "created_at") : "created_at";
 
         $search = $this->get_param('search', PARAM_RAW, null);
         if (empty($entityid)) {
@@ -116,9 +116,9 @@ class categories_domains_controller extends controller_base
             }
             
             // Check if domain already exists for main entity && is DISABLED
-            if ( $repo->is_domain_disabled($domain))
+            if ($this->categoriesdomainsrepository->is_domain_disabled($domain))
             {
-                $result =  $repo->reactivate_domain($domain);
+                $result = $this->categoriesdomainsrepository->reactivate_domain($domain->course_categories_id, $domain->domain_name);
                 return ['status' => true, 'message' => $result];
             }
 
