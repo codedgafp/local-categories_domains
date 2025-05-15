@@ -360,7 +360,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
      * @throws coding_exception
      * @throws dml_exception
      * @throws moodle_exception
-     * @covers \local_categories_domains\categories_domains_repository::get_active_domains_by_category
      */
     public function test_get_active_domains_order_by_domain_name() {
         $this->resetAllData();
@@ -613,7 +612,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertEquals($category1->name, $user1linkentity->categoryname);
 
         $user2linkentity = $this->categoriesdomainsrepository->get_user_link_category($user2->id);
-        $this->assertEquals('', $user2linkentity->categoryname);
+        $this->assertEquals(false, $user2linkentity);
 
         $defaultcategory = \local_mentor_specialization\mentor_entity::get_default_entity();
         $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
@@ -685,7 +684,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertEquals($categoryname1, $user2linkentity->categoryname);
 
         $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
-        $this->assertEquals('', $user3linkentity->categoryname);
+        $this->assertEquals(false, $user3linkentity);
 
         $defaultcategory = \local_mentor_specialization\mentor_entity::get_default_entity();
         $user4linkentity = $this->categoriesdomainsrepository->get_user_link_category($user4->id);
@@ -806,6 +805,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@test1.com']);
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
-        $this->assertEquals("", $user1linkentity->categoryname);
+        $this->assertEquals(false, $user1linkentity);
     }
 }

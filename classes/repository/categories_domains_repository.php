@@ -288,19 +288,19 @@ class categories_domains_repository
 
     public function get_user_link_category(int $userid)
     {
-        $sql = "SELECT uid.data as categoryname
-                FROM {user_info_data} uid
+        $sql = "SELECT
+                    cc.id,
+                    cc.name AS categoryname
+                FROM {course_categories} cc
+                INNER JOIN {user_info_data} uid ON uid.data = cc.name
+                INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid
+                    AND uif.shortname = :fieldname
                 INNER JOIN {user} u ON u.id = uid.userid
-                WHERE u.id = :userid
-                AND uid.fieldid = (
-                    SELECT id
-                    FROM {user_info_field}
-                    WHERE shortname = :fieldname
-                    LIMIT 1
-                )";
+                    AND u.id = :userid
+                ";
         $params = [
-            'userid' => $userid,
-            'fieldname' => 'mainentity'
+            'fieldname' => 'mainentity',
+            'userid' => $userid
         ];
 
         return $this->db->get_record_sql($sql, $params);
