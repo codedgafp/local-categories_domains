@@ -286,7 +286,13 @@ class categories_domains_repository
         return array_values($this->db->get_records_sql($sql));
     }
 
-    public function get_user_link_category(int $userid)
+    /**
+     * Get the category name linked to a user
+     * 
+     * @param int $userid
+     * @return \stdClass|bool
+     */
+    public function get_user_link_category(int $userid): \stdClass|bool
     {
         $sql = "SELECT
                     cc.id,
