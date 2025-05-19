@@ -74,36 +74,37 @@ class domain_name
     {
         global $CFG;
 
-        $whitelistconfig = $CFG->allowemailaddresses;
-        $whitelist = array_map('trim', explode(' ', $whitelistconfig));
+        $whitelist = array_map('trim', explode(' ', $CFG->allowemailaddresses));
 
         $parts = explode('@', $useremail);
-        $emaildomain = $parts[1];
+        $emaildomain = strtolower(trim($parts[1]));
 
         foreach ($whitelist as $alloweddomain) {
-            $cleandomain = ltrim($alloweddomain, '.');
+            $allowed = strtolower($alloweddomain);
 
-            if (strtolower($cleandomain) === strtolower($emaildomain)) {
+            // If perfect match
+            if ($allowed === $emaildomain) {
                 $this->domain_name = $alloweddomain;
+                break;
             }
-            
-            // Si le domaine dans la liste commençait par un point (ex: .archi.fr)
-            if (substr($alloweddomain, 0, 1) === '.') {
-                if (preg_match('/' . preg_quote($cleandomain, '/') . '$/i', $emaildomain)) {
-                    $this->domain_name = $alloweddomain;
-                    break;
-                }
-                // Sinon, vérifier avec le motif standard (avec un point devant)
-            } else {
-                if (preg_match('/\.' . preg_quote($cleandomain, '/') . '$/i', $emaildomain)) {
+
+            // If alloweddomain begin with a "."
+            if (strpos($allowed, '.') === 0) {
+                $suffix = substr($allowed, 1);
+                if (str_ends_with($emaildomain, ".$suffix")) {
                     $this->domain_name = $alloweddomain;
                     break;
                 }
             }
-        }  
-        
+        }
+
         if (!isset($this->domain_name)) {
             $this->domain_name = $emaildomain;
         }
+    }
+
+    private function str_ends_with($haystack, $needle): bool
+    {
+        return substr($haystack, -strlen($needle)) === $needle;
     }
 }
