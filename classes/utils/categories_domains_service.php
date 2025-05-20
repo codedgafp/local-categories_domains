@@ -9,6 +9,8 @@ require_once "$CFG->dirroot/local/mentor_specialization/classes/models/mentor_en
 use \local_categories_domains\repository\categories_domains_repository;
 use \local_categories_domains\model\domain_name;
 use \local_mentor_specialization\mentor_entity;
+use \local_mentor_core\database_interface;
+use \local_mentor_core\profile_api;
 use core_course_category;
 
 class categories_domains_service
@@ -57,7 +59,7 @@ class categories_domains_service
                 // RG01-MEN-474
 
                 $this->manage_users_external_role($userstoupdate, true);
-                $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
+                $this->update_users_linked_course_categories($userstoupdate, $categorytoset->name);
 
                 continue;
             }
@@ -76,14 +78,14 @@ class categories_domains_service
 
                     $emptycoursecategory = new \stdClass();
                     $emptycoursecategory->name = "";
-                    $this->categoriesdomainsrepository->update_users_course_category($emptycoursecategory->name, $userstoupdate);
+                    $this->update_users_linked_course_categories($userstoupdate, $emptycoursecategory->name);
                 }
 
                 continue;
             }
 
             $categoryname = reset($categoriesbydomain)->name;
-            $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
+            $this->update_users_linked_course_categories($userstoupdate, $categoryname);
         }
 
         return true;
@@ -155,7 +157,7 @@ class categories_domains_service
      */
     private function manage_users_external_role(array &$userstoupdate, bool $setexternalrole)
     {
-        $dbinterface = \local_mentor_core\database_interface::get_instance();
+        $dbinterface = database_interface::get_instance();
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
 
         foreach ($userstoupdate as $userid) {
@@ -172,5 +174,22 @@ class categories_domains_service
             $userstoupdate = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity($userstoupdate);
         }
         // RG03-MEN-474
+    }
+
+    /**
+     * Link the course_categories to all the users to update, and synchronize their cohort with the new entity
+     * 
+     * @param mixed $userstoupdate
+     * @param mixed $categoryname
+     * @return void
+     */
+    private function update_users_linked_course_categories($userstoupdate, $categoryname): void
+    {
+        $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
+
+        foreach ($userstoupdate as $user) {
+            $profile = profile_api::get_profile($user);
+            $profile->sync_entities();
+        }
     }
 }
