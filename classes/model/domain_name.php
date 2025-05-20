@@ -79,25 +79,42 @@ class domain_name
         $parts = explode('@', $useremail);
         $emaildomain = strtolower(trim($parts[1]));
 
-        foreach ($whitelist as $alloweddomain) {
+        $whitelistdomain = [];
+        $whitelistsubdomain = [];
+        foreach ($whitelist as $domain) {
+            if (strpos($domain, '.') === 0) {
+                $whitelistsubdomain[] = $domain;
+            } else {
+                $whitelistdomain[] = $domain;
+            }
+        }
+
+        // Check if perfect match first
+        foreach ($whitelistdomain as $alloweddomain) {
             $allowed = strtolower($alloweddomain);
 
-            // If perfect match
             if ($allowed === $emaildomain) {
                 $this->domain_name = $alloweddomain;
                 break;
             }
+        }
 
-            // If alloweddomain begin with a "."
-            if (strpos($allowed, '.') === 0) {
-                $suffix = substr($allowed, 1);
-                if (str_ends_with($emaildomain, ".$suffix")) {
-                    $this->domain_name = $alloweddomain;
-                    break;
+        // Check with sub-domains second
+        if (!isset($this->domain_name)) {
+            foreach ($whitelistsubdomain as $allowedsubdomain) {
+                $allowed = strtolower($allowedsubdomain);
+
+                if (strpos($allowed, '.') === 0) {
+                    $suffix = substr($allowed, 1);
+                    if (str_ends_with($emaildomain, ".$suffix")) {
+                        $this->domain_name = $allowedsubdomain;
+                        break;
+                    }
                 }
             }
         }
 
+        // If the user domain doesn't match with whitelisted domains
         if (!isset($this->domain_name)) {
             $this->domain_name = $emaildomain;
         }
