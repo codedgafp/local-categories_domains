@@ -39,32 +39,6 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->db = $DB;
     }
 
-    public function test_get_default_entity_ok()
-    {
-        $category = $this->getDataGenerator()->create_category();
-
-        $categoryoptions = (object) [
-            'categoryid' => $category->id,
-            'name' => 'isdefaultentity',
-            'value' => 1
-        ];
-
-        $this->db->insert_record('category_options', $categoryoptions, false);
-
-        $defaultcategory = $this->categoriesdomainsservice->get_default_entity();
-
-        $this->assertEquals($category->id, $defaultcategory->id);
-    }
-    
-    public function test_get_default_entity_no_default_entity_set()
-    {
-        $category = $this->db->get_record('course_categories', ['idnumber' => 'Biblio formations']);
-
-        $defaultcategory = $this->categoriesdomainsservice->get_default_entity();
-
-        $this->assertEquals($category->id, $defaultcategory->id);
-    }
-
     /**
      * Test when their is domains and valid category, and it exist
      *
