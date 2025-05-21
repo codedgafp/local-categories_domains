@@ -4,14 +4,16 @@ namespace local_categories_domains\utils;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once "$CFG->dirroot/local/mentor_specialization/classes/models/mentor_entity.php";
-
 use \local_categories_domains\repository\categories_domains_repository;
 use \local_categories_domains\model\domain_name;
 use \local_mentor_specialization\mentor_entity;
 use \local_mentor_core\database_interface;
 use \local_mentor_core\profile_api;
 use core_course_category;
+
+require_once "$CFG->dirroot/local/mentor_core/classes/database_interface.php";
+require_once "$CFG->dirroot/local/mentor_specialization/classes/models/mentor_entity.php";
+require_once "$CFG->dirroot/local/mentor_core/api/profile.php";
 
 class categories_domains_service
 {
@@ -40,6 +42,8 @@ class categories_domains_service
 
         $domainsdata = array_unique(array_map([$this, 'get_domains_data'], $users), SORT_REGULAR);
 
+        $userstocohort = [];
+
         foreach ($domainsdata as $domain) {
             $userstoupdate = $this->get_users_to_update($users, $domain['domainname']);
 
@@ -59,7 +63,9 @@ class categories_domains_service
                 // RG01-MEN-474
 
                 $this->manage_users_external_role($userstoupdate, true);
-                $this->update_users_linked_course_categories($userstoupdate, $categorytoset->name);
+                $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
+
+                $userstocohort = array_merge($userstoupdate, $userstocohort);
 
                 continue;
             }
@@ -78,14 +84,23 @@ class categories_domains_service
 
                     $emptycoursecategory = new \stdClass();
                     $emptycoursecategory->name = "";
-                    $this->update_users_linked_course_categories($userstoupdate, $emptycoursecategory->name);
+                    $this->categoriesdomainsrepository->update_users_course_category($emptycoursecategory->name, $userstoupdate);
                 }
+
+                $userstocohort = array_merge($userstoupdate, $userstocohort);
 
                 continue;
             }
 
             $categoryname = reset($categoriesbydomain)->name;
-            $this->update_users_linked_course_categories($userstoupdate, $categoryname);
+            $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
+
+            $userstocohort = array_merge($userstoupdate, $userstocohort);
+        }
+
+        foreach ($userstocohort as $user) {
+            $profile = profile_api::get_profile($user);
+            $profile->sync_entities();
         }
 
         return true;
@@ -174,22 +189,5 @@ class categories_domains_service
             $userstoupdate = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity($userstoupdate);
         }
         // RG03-MEN-474
-    }
-
-    /**
-     * Link the course_categories to all the users to update, and synchronize their cohort with the new entity
-     * 
-     * @param mixed $userstoupdate
-     * @param mixed $categoryname
-     * @return void
-     */
-    private function update_users_linked_course_categories($userstoupdate, $categoryname): void
-    {
-        $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
-
-        foreach ($userstoupdate as $user) {
-            $profile = profile_api::get_profile($user);
-            $profile->sync_entities();
-        }
     }
 }

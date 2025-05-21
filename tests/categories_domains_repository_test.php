@@ -11,6 +11,7 @@ defined('MOODLE_INTERNAL') || die();
 use \local_categories_domains\repository\categories_domains_repository;
 use local_categories_domains\utils\categories_domains_service;
 use \local_categories_domains\model\domain_name;
+use \local_mentor_specialization\mentor_entity;
 
 global $CFG;
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
@@ -614,7 +615,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $user2linkentity = $this->categoriesdomainsrepository->get_user_link_category($user2->id);
         $this->assertEquals(false, $user2linkentity);
 
-        $defaultcategory = \local_mentor_specialization\mentor_entity::get_default_entity();
+        $defaultcategory = mentor_entity::get_default_entity();
         $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
         $this->assertEquals($defaultcategory->name, $user3linkentity->categoryname);
 
@@ -686,7 +687,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $user3linkentity = $this->categoriesdomainsrepository->get_user_link_category($user3->id);
         $this->assertEquals(false, $user3linkentity);
 
-        $defaultcategory = \local_mentor_specialization\mentor_entity::get_default_entity();
+        $defaultcategory = mentor_entity::get_default_entity();
         $user4linkentity = $this->categoriesdomainsrepository->get_user_link_category($user4->id);
         $this->assertEquals($defaultcategory->name, $user4linkentity->categoryname);
 
