@@ -520,4 +520,62 @@ class categories_domains_repository
 
         return $this->db->get_records_sql($sql, $params);
     }
+
+    /**
+     * Get the domains that are no more whitelisted
+     * 
+     */
+    public function get_domains_no_more_whitelisted() : array 
+    {
+        global $CFG;
+        // Get domains that are no more whitelisted in course_categories_domains.
+        $whitelistdomains = array_filter(explode(' ', $CFG->allowemailaddresses));
+        $params = [];
+        $placeholders = [];
+        $where = "";
+        if (!empty($whitelistdomains)) {
+            foreach ($whitelistdomains as $i => $domain) {
+                $key = "email$i";
+                $placeholders[] = ':' . $key;
+                $params[$key] = $domain;
+            }
+            $where = "AND  domain_name NOT IN (" . implode(', ', $placeholders) . ")";
+        }
+
+        $sql = "SELECT DISTINCT domain_name 
+                FROM {course_categories_domains}
+                WHERE created_at IS NOT NULL
+                $where";
+
+        return  $this->db->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Delete domains => disable them
+     *
+     * @param array $domains
+     * @return bool
+     */
+    public function delete_domains(array $domains): bool
+    {
+        if (empty($domains)) {
+            return false;
+        }
+        $params = ['disabled_at' => time()];
+        list($inSql, $inParams) = $this->db->get_in_or_equal($domains, SQL_PARAMS_NAMED, 'domain');
+        $sql = "UPDATE {course_categories_domains} 
+                SET disabled_at = :disabled_at 
+                WHERE created_at IS NOT NULL
+                AND disabled_at IS NULL
+                AND domain_name $inSql";
+
+        $params = array_merge($params, $inParams);
+
+       try {
+            return $this->db->execute($sql, $params);
+        } catch (\dml_exception $e) {
+            throw new \moodle_exception('errordeletingdomain', 'local_categories_domains', '', $e->getMessage());
+        }
+    }
+
 }
