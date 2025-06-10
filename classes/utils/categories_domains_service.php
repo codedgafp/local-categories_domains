@@ -46,6 +46,7 @@ class categories_domains_service
 
         foreach ($domainsdata as $domain) {
             $userstoupdate = $this->get_users_to_update($users, $domain['domainname']);
+            $userstocohort = array_merge($userstoupdate, $userstocohort);
 
             $usersnomainentityfield = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data($userstoupdate);
             if ($usersnomainentityfield) {
@@ -64,8 +65,6 @@ class categories_domains_service
 
                 $this->manage_users_external_role($userstoupdate, true);
                 $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
-
-                $userstocohort = array_merge($userstoupdate, $userstocohort);
 
                 continue;
             }
@@ -87,20 +86,21 @@ class categories_domains_service
                     $this->categoriesdomainsrepository->update_users_course_category($emptycoursecategory->name, $userstoupdate);
                 }
 
-                $userstocohort = array_merge($userstoupdate, $userstocohort);
-
                 continue;
             }
 
             $categoryname = reset($categoriesbydomain)->name;
             $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
-
-            $userstocohort = array_merge($userstoupdate, $userstocohort);
         }
 
         foreach ($userstocohort as $user) {
             $profile = profile_api::get_profile($user);
-            $profile->sync_entities();
+            $profilemainentity = $profile->get_main_entity();
+            $usercohortcategories = $this->categoriesdomainsrepository->get_user_cohort_categories_name($user);
+
+            if ($profilemainentity && !in_array($profilemainentity->name, $usercohortcategories)) {
+                $profile->sync_entities();
+            }
         }
 
         return true;
@@ -172,7 +172,7 @@ class categories_domains_service
      */
     private function manage_users_external_role(array &$userstoupdate, bool $setexternalrole)
     {
-        $dbinterface = database_interface::get_instance();
+        $mentorcoredbi = database_interface::get_instance();
         $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
 
         foreach ($userstoupdate as $userid) {
@@ -180,7 +180,7 @@ class categories_domains_service
 
             $isexternal = $this->db->get_records('role_assignments', ['userid' => $userid, 'roleid' => $externalrole->id]);
             if ($isexternal && $setexternalrole) {
-                $dbinterface->set_profile_field_value($userid, 'roleMentor', $externalrole->shortname);
+                $mentorcoredbi->set_profile_field_value($userid, 'roleMentor', $externalrole->shortname);
             }
         }
 

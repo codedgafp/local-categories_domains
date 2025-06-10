@@ -12,6 +12,8 @@ use \local_categories_domains\repository\categories_domains_repository;
 use local_categories_domains\utils\categories_domains_service;
 use \local_categories_domains\model\domain_name;
 use \local_mentor_specialization\mentor_entity;
+use \local_mentor_core\profile_api;
+use \local_mentor_core\database_interface;
 
 global $CFG;
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
@@ -22,6 +24,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     private $db;
     private categories_domains_repository $categoriesdomainsrepository;
     private categories_domains_service $categoriesdomainsservice;
+    private database_interface $mentorcoredbi;
 
     /**
      * Setup test
@@ -34,6 +37,7 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $this->categoriesdomainsrepository = new categories_domains_repository();
         $this->categoriesdomainsservice = new categories_domains_service();
+        $this->mentorcoredbi = database_interface::get_instance();
 
         global $DB;
         $this->db = $DB;
@@ -807,5 +811,41 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
         $user1linkentity = $this->categoriesdomainsrepository->get_user_link_category($user1->id);
         $this->assertEquals(false, $user1linkentity);
+    }
+
+    /**
+     * Test get_user_cohort_categories_name
+     */
+    public function test_get_user_cohort_categories_name_request()
+    {
+        global $CFG;
+
+        $CFG->allowemailaddresses = 'mail.com';
+
+        $category1 = $this->getDataGenerator()->create_category();
+        $domain1 = (object) [
+            'course_categories_id' => $category1->id,
+            'domain_name' => 'mail.com',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+        $this->db->insert_record('course_categories_domains', $domain1, false);
+
+        $user = $this->getDataGenerator()->create_user(['email' => 'user@mail.com']);
+
+        $usercohorts = $this->categoriesdomainsrepository->get_user_cohort_categories_name($user->id);
+
+        $this->assertCount(1, $usercohorts);
+        $this->assertTrue(in_array($category1->name, $usercohorts));
+
+        $profile = profile_api::get_profile($user);
+        foreach ($profile->get_entities_cohorts() as $usercohort) {
+            $this->mentorcoredbi->remove_cohort_member($usercohort->cohortid, $user->id);
+        }
+
+        $usercohorts = $this->categoriesdomainsrepository->get_user_cohort_categories_name($user->id);
+
+        $this->assertCount(0, $usercohorts);
+        $this->assertFalse(in_array($category1->name, $usercohorts));
     }
 }

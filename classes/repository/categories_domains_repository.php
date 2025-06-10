@@ -32,8 +32,8 @@ class categories_domains_repository
      * @param string $orderdir
      * @return array
      */
-    public function get_active_domains_by_category(int $coursecategoryid,string $orderdir = "DESC", string $orderBy = "created_at", ?string $search = null): array
-    {   
+    public function get_active_domains_by_category(int $coursecategoryid, string $orderdir = "DESC", string $orderBy = "created_at", ?string $search = null): array
+    {
         $sql = "SELECT ccd.domain_name
                 FROM {course_categories_domains} ccd
                 WHERE ccd.course_categories_id = :coursecategoryid
@@ -183,7 +183,7 @@ class categories_domains_repository
     }
 
 
-        /**
+    /**
      * Check if the domain already exists for the same entity and disabled
      * 
      * @param domain_name $domain The domain name to check
@@ -191,13 +191,13 @@ class categories_domains_repository
      */
     public function is_domain_disabled(domain_name $domain): bool
     {
-            return $this->db->record_exists_sql(
-                "SELECT 1 FROM {course_categories_domains} 
+        return $this->db->record_exists_sql(
+            "SELECT 1 FROM {course_categories_domains} 
                 WHERE domain_name = :domainname
                 AND course_categories_id = :entity
                 AND disabled_at IS NOT NULL",
-                ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
-            );
+            ['domainname' => $domain->domain_name, 'entity' => $domain->course_categories_id]
+        );
     }
 
     /**
@@ -525,7 +525,7 @@ class categories_domains_repository
      * Get the domains that are no more whitelisted
      * 
      */
-    public function get_domains_no_more_whitelisted() : array 
+    public function get_domains_no_more_whitelisted(): array
     {
         global $CFG;
         // Get domains that are no more whitelisted in course_categories_domains.
@@ -547,7 +547,7 @@ class categories_domains_repository
                 WHERE created_at IS NOT NULL
                 $where";
 
-        return  $this->db->get_records_sql($sql, $params);
+        return $this->db->get_records_sql($sql, $params);
     }
 
     /**
@@ -571,11 +571,40 @@ class categories_domains_repository
 
         $params = array_merge($params, $inParams);
 
-       try {
+        try {
             return $this->db->execute($sql, $params);
         } catch (\dml_exception $e) {
             throw new \moodle_exception('errordeletingdomain', 'local_categories_domains', '', $e->getMessage());
         }
     }
 
+    /**
+     * Get all cohort categories by userid
+     * 
+     * @param int $userid
+     * @return \stdClass[]
+     * @throws \dml_exception
+     */
+    public function get_user_cohort_categories_name(int $userid): array
+    {
+        $sql = "SELECT cc.name
+                FROM {course_categories} cc
+                INNER JOIN {context} c ON c.instanceid = cc.id
+                    AND c.contextlevel = :contextcoursecat
+                INNER JOIN {cohort} coh ON coh.contextid = c.id
+                INNER JOIN {cohort_members} cm ON cm.cohortid = coh.id
+                    AND cm.userid = :userid
+                WHERE cc.depth = 1
+                ";
+
+        $params = [
+            'contextcoursecat' => CONTEXT_COURSECAT,
+            'userid' => $userid,
+        ];
+
+        return array_map(
+            fn($category): string => $category->name,
+            $this->db->get_records_sql($sql, $params)
+        );
+    }
 }
