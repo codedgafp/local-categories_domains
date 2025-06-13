@@ -499,7 +499,6 @@ class categories_domains_repository
 
         if ($arevalid) {
             $whereclause = " 
-                AND email LIKE '%_@_%.__%'
                 AND confirmed = 1
                 AND deleted = 0
                 ";
@@ -517,6 +516,31 @@ class categories_domains_repository
                 ";
 
         $params['domainname'] = $domainname;
+
+        return $this->db->get_records_sql($sql, $params);
+    }
+
+    /**
+     * Get all valid users with no main entity or is empty in database
+     * 
+     * @return array
+     */
+    public function get_users_without_main_entity(): array
+    {
+        $sql = "SELECT u.id, u.email
+                FROM {user} u
+                LEFT JOIN {user_info_data} uid
+                    ON u.id = uid.userid
+                    AND uid.fieldid = (
+                        SELECT id
+                        FROM {user_info_field}
+                        WHERE shortname = :fieldname
+                    )
+                WHERE (uid.data is null or trim(uid.data) = '')
+                AND u.confirmed = 1
+                AND u.deleted = 0
+                ";
+        $params['fieldname'] = 'mainentity';
 
         return $this->db->get_records_sql($sql, $params);
     }

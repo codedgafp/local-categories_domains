@@ -848,4 +848,84 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertCount(0, $usercohorts);
         $this->assertFalse(in_array($category1->name, $usercohorts));
     }
+
+    public function test_get_all_users_by_domain_name()
+    {
+        $this->db->delete_records('user');
+
+        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@mail.com']);
+        $user2 = $this->getDataGenerator()->create_user(['email' => 'user2@mail.com']);
+        $user3 = $this->getDataGenerator()->create_user(['email' => 'user3@domain.mail.com']);
+        $user4 = $this->getDataGenerator()->create_user(['email' => 'user4@sous.domain.mail.com']);
+
+        // === Get users by their domain ===
+        $getusermailcom = $this->categoriesdomainsrepository->get_all_users_by_domain_name('mail.com');
+        $this->assertCount(2, $getusermailcom);
+        $this->assertTrue(in_array($user1->id, array_column($getusermailcom, 'id')));
+        $this->assertTrue(in_array($user2->id, array_column($getusermailcom, 'id')));
+        $this->assertFalse(in_array($user3->id, array_column($getusermailcom, 'id')));
+        $this->assertFalse(in_array($user4->id, array_column($getusermailcom, 'id')));
+
+        $getuserdomainmailcom = $this->categoriesdomainsrepository->get_all_users_by_domain_name('domain.mail.com');
+        $this->assertCount(1, $getuserdomainmailcom);
+        $this->assertFalse(in_array($user1->id, array_column($getuserdomainmailcom, 'id')));
+        $this->assertFalse(in_array($user2->id, array_column($getuserdomainmailcom, 'id')));
+        $this->assertTrue(in_array($user3->id, array_column($getuserdomainmailcom, 'id')));
+        $this->assertFalse(in_array($user4->id, array_column($getuserdomainmailcom, 'id')));
+
+        $getusersousdomainmailcom = $this->categoriesdomainsrepository->get_all_users_by_domain_name('sous.domain.mail.com');
+        $this->assertCount(1, $getusersousdomainmailcom);
+        $this->assertFalse(in_array($user1->id, array_column($getusersousdomainmailcom, 'id')));
+        $this->assertFalse(in_array($user2->id, array_column($getusersousdomainmailcom, 'id')));
+        $this->assertFalse(in_array($user3->id, array_column($getusersousdomainmailcom, 'id')));
+        $this->assertTrue(in_array($user4->id, array_column($getusersousdomainmailcom, 'id')));
+
+        // === Get only valid users ===
+        $user5 = $this->getDataGenerator()->create_user(['email' => 'user5@mail.com']);
+        $recorduser5 = new \stdClass;
+        $recorduser5->id = $user5->id;
+        $recorduser5->confirmed = 0;
+        $this->db->update_record('user', $recorduser5);
+
+        $user6 = $this->getDataGenerator()->create_user(['email' => 'user6@mail.com']);
+        $recorduser6 = new \stdClass;
+        $recorduser6->id = $user6->id;
+        $recorduser6->deleted = 1;
+        $this->db->update_record('user', $recorduser6);
+
+        $getvalidusers = $this->categoriesdomainsrepository->get_all_users_by_domain_name('mail.com', true);
+        $this->assertCount(2, $getvalidusers);
+        $this->assertTrue(in_array($user1->id, array_column($getvalidusers, 'id')));
+        $this->assertTrue(in_array($user2->id, array_column($getvalidusers, 'id')));
+        $this->assertFalse(in_array($user5->id, array_column($getvalidusers, 'id')));
+        $this->assertFalse(in_array($user6->id, array_column($getvalidusers, 'id')));
+
+        $getvalidusersmail = $this->categoriesdomainsrepository->get_all_users_by_domain_name('.mail.com', true);
+        $this->assertCount(2, $getvalidusersmail);
+        $this->assertTrue(in_array($user3->id, array_column($getvalidusersmail, 'id')));
+        $this->assertTrue(in_array($user4->id, array_column($getvalidusersmail, 'id')));
+        $this->assertFalse(in_array($user5->id, array_column($getvalidusersmail, 'id')));
+        $this->assertFalse(in_array($user6->id, array_column($getvalidusersmail, 'id')));
+    }
+
+    public function test_get_users_without_main_entity()
+    {
+        $this->db->delete_records('user');
+
+        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@mail.com']);
+        $this->categoriesdomainsrepository->update_users_course_category('', [$user1->id]);
+
+        $user2 = $this->getDataGenerator()->create_user(['email' => 'user2@mail.com']);
+        $usermainentityfield = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
+        $usermainentitydata = $this->db->get_record('user_info_data', ['userid' => $user2->id, 'fieldid' => $usermainentityfield->id]);
+        $this->db->delete_records('user_info_data', ['id' => $usermainentitydata->id]);
+
+        $user3 = $this->getDataGenerator()->create_user(['email' => 'user3@mail.com']);
+
+        $getinvalidmainentity = $this->categoriesdomainsrepository->get_users_without_main_entity();
+        $this->assertCount(2, $getinvalidmainentity);
+        $this->assertTrue(in_array($user1->id, array_column($getinvalidmainentity, 'id')));
+        $this->assertTrue(in_array($user2->id, array_column($getinvalidmainentity, 'id')));
+        $this->assertFalse(in_array($user3->id, array_column($getinvalidmainentity, 'id')));
+    }
 }
