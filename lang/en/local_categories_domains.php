@@ -25,7 +25,6 @@ $string['add_domain'] = 'Ajouter un domaine';
 $string['domain_name'] = 'Nom du domaine';
 $string['cancel'] = 'Annuler';
 $string['confirm'] = 'Confirmer';
-$string['requiredfield'] = 'Le champ marqué d\'un * est obligatoire';
 $string['delete_domain'] = 'Suppression d\'un domaine';
 $string['delete_domain_confirmation_text'] = 'Attention ! Vous êtes sur le point de supprimer le domaine {$a} .Confirmerez-vous la suppression ?';
 $string['delete'] = 'Supprimer';
@@ -34,6 +33,7 @@ $string['import_csv_domain'] = 'Importer des domaines en lot';
 
 // Add domain name
 $string['requiredfield'] = 'Le champ marqué d\'un * est obligatoire';
+$string['required'] = 'Vous devez remplir ce champ.';
 $string['domainnotwhitelisted'] = 'Ce domaine n\'appartient pas à la liste blanche';
 $string['domainexists'] = 'Le nom de domaine est déjà rattaché à l\'espace dédié';
 $string['erroraddingdomain'] = 'Erreur lors de l\'ajout du domaine';
@@ -48,4 +48,4 @@ $string['errorimport'] = 'Une erreur a été détectée dans le fichier à la li
 $string['domainsimported'] = 'Import effectué';
 
 // Export CSV
-$string['headers_export_csv_domains'] = ['domain_name', 'idnumber'];
+$string['headers_export_csv_domains'] = 'domain_name,idnumber';

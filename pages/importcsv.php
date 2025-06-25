@@ -61,7 +61,9 @@ $renderer = $PAGE->get_renderer('local_categories_domains', 'categories_domains'
 echo $renderer->render_export_domains_csv();
 
 // Import CSV form.
-$csvmform = new importdomainscsv_form($url->out(), ['entityid' => $entityid]);
+$csvformdata = new stdClass;
+$csvformdata->entityid = $entityid;
+$csvmform = new importdomainscsv_form($url->out(), $csvformdata);
 $csvformdata = $csvmform->get_data();
 // Validate given data from CSV.
 if (null !== $csvformdata) {
@@ -80,7 +82,6 @@ if (null !== $csvformdata) {
         $content = str_getcsv($filecontent, "\n");
         if(local_categories_domains_validate_domains_csv($content))
         {
-
             // Import domains.
             $imported = local_categories_domains_import_domains($content);
             if ($imported) {
@@ -91,8 +92,8 @@ if (null !== $csvformdata) {
         }
     }
 } else {
-
     $csvmform->set_data($csvformdata);
     $csvmform->display();
 }
+
 echo $OUTPUT->footer();

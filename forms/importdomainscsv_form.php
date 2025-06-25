@@ -50,8 +50,8 @@ class importdomainscsv_form extends moodleform
     public function __construct($action, $data)
     {
 
-        if (isset($data['entityid'])) {
-            $this->entityid = $data['entityid'];
+        if (isset($data->entityid)) {
+            $this->entityid = $data->entityid;
         }
 
         parent::__construct($action);
@@ -73,7 +73,7 @@ class importdomainscsv_form extends moodleform
         ]);
 
         $mform->addElement('static', 'examplecsv', html_writer::tag('span', get_string('textexamplecsv', 'local_categories_domains'), ['style' => 'color: red;']), $link);
-        
+
         $mform->addElement(
             'filepicker',
             'domainscsv',
@@ -82,7 +82,6 @@ class importdomainscsv_form extends moodleform
             ['maxbytes' => self::_MAXBYTES, 'accepted_types' => 'text/csv']
         );
         $mform->addRule('domainscsv', get_string('required', 'local_categories_domains'), 'required');
-       
 
         $this->add_action_buttons(false, get_string('validate_import', 'local_categories_domains'));
     }

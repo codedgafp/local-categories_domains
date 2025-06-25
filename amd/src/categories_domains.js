@@ -233,7 +233,8 @@ define([
             var downloadLink;
             
             // Add CSV Headers
-            var headers = M.util.get_string('headers_export_csv_domains', 'local_categories_domains');
+            var headersString = M.util.get_string('headers_export_csv_domains', 'local_categories_domains');
+            var headers = headersString.split(';');
             csv += headers.join(';') + '\n';
 
             // Add CSV data
