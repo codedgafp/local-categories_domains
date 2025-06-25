@@ -277,7 +277,14 @@ class categories_domains_repository
 
     public function get_all_activated_domains(): array
     {
-        return $this->db->get_records('course_categories_domains', ['disabled_at' => null]);
+        $sql = "SELECT ROW_NUMBER() OVER (ORDER BY domain_name ASC, course_categories_id ASC) AS line,
+                    domain_name domain_name, 
+                    course_categories_id course_categories_id
+                FROM {course_categories_domains}
+                WHERE disabled_at IS NULL
+        ";
+
+        return array_values($this->db->get_records_sql($sql));
     }
 
     /**
