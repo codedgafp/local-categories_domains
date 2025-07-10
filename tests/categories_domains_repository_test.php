@@ -340,6 +340,25 @@ class local_categories_domains_repository_testcase extends advanced_testcase
     {
         global $CFG;
 
+        $CFG->allowemailaddresses = '';
+
+        $domain1 = new domain_name();
+        $domain1->domain_name = 'test.com';
+
+        $this->assertFalse($domain1->is_whitelisted());
+
+        $CFG->allowemailaddresses = '  ';
+
+        $domain1 = new domain_name();
+        $domain1->domain_name = 'test.com';
+        $this->assertFalse($domain1->is_whitelisted());
+
+        $CFG->allowemailaddresses = 'test.com example.com   .subdomain.com';
+
+        $domain1 = new domain_name();
+        $domain1->domain_name = 'test.com';
+        $this->assertTrue($domain1->is_whitelisted());
+
         $CFG->allowemailaddresses = 'test.com example.com .subdomain.com';
 
         $domain1 = new domain_name();

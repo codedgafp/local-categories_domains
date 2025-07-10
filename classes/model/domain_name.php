@@ -39,11 +39,11 @@ class domain_name
         global $CFG;
         $whitelistConfig = $CFG->allowemailaddresses;
 
-        if (empty($whitelistConfig)) {
+        if (empty(trim($whitelistConfig)) ) {
             return false;
         }
 
-        $whitelist = array_map('trim', explode(' ', $whitelistConfig));
+        $whitelist = preg_split('/\s+/', trim($whitelistConfig));
         foreach ($whitelist as $allowed) {
             if ($this->domain_name === $allowed || ($allowed[0] === '.' && str_ends_with($this->domain_name, $allowed))) {
                 return true;
