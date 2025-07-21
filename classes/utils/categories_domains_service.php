@@ -95,12 +95,7 @@ class categories_domains_service
 
         foreach ($userstocohort as $user) {
             $profile = profile_api::get_profile($user);
-            $profilemainentity = $profile->get_main_entity();
-            $usercohortcategories = $this->categoriesdomainsrepository->get_user_cohort_categories_name($user);
-
-            if ($profilemainentity && !in_array($profilemainentity->name, $usercohortcategories)) {
-                $profile->sync_entities();
-            }
+            $profile->sync_entities();
         }
 
         return true;
