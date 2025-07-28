@@ -29,8 +29,8 @@ class categories_domains_service
     }
 
     /**
-     * Lie automatiquement les utilisateurs à l'entité auquel il doit être relié.
-     * De plus gère automatiquement l'attribution du rôle externe.
+     * Link users automatically to their corresponding main and secondary entity.
+     * Manage automatically the assignment of the external role.
      * 
      * @param array $users
      * @param \stdClass|\core_course_category $category
@@ -43,6 +43,10 @@ class categories_domains_service
         $domainsdata = array_unique(array_map([$this, 'get_domains_data'], $users), SORT_REGULAR);
 
         $userstocohort = [];
+
+        if ($category) {
+            $mentorentity = new mentor_entity($category->id);
+        }
 
         foreach ($domainsdata as $domain) {
             $userstoupdate = $this->get_users_to_update($users, $domain['domainname']);
@@ -58,7 +62,6 @@ class categories_domains_service
                 $categorytoset = $defaultcategory;
 
                 if ($category) {
-                    $mentorentity = new mentor_entity($category->id);
                     $categorytoset = $mentorentity->can_be_main_entity(true) ? $category : $defaultcategory;
                 }
                 // RG01-MEN-474
@@ -92,9 +95,16 @@ class categories_domains_service
             $categoryname = reset($categoriesbydomain)->name;
             $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
         }
-
+        
         foreach ($userstocohort as $user) {
             $profile = profile_api::get_profile($user);
+        
+            //Set secondary entity for user
+            if ($category) {
+                $profilemainentity = ($profile->get_main_entity() !== false && $profile->get_main_entity() !== null) ? $profile->get_main_entity()->id : null;
+                $secondaryentities = $this->set_secondary_entities($mentorentity, $profilemainentity);
+                $profile->set_profile_field('secondaryentities', implode(',', $secondaryentities));
+            }
             $profile->sync_entities();
         }
 
@@ -185,4 +195,14 @@ class categories_domains_service
         }
         // RG03-MEN-474
     }
+
+    private function set_secondary_entities($entity = null, int $user_main_entity = null) : array
+    {
+        $secondaryentity = [];
+        if ($entity && (($entity->can_be_main_entity() && $user_main_entity != $entity->id) || (!$entity->can_be_main_entity()))) {
+            $secondaryentity = [$entity->name];
+        }
+
+    return $secondaryentity;
+}
 }

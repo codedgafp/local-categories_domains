@@ -16,6 +16,9 @@ use \local_mentor_core\profile_api;
 use \local_mentor_core\database_interface;
 
 global $CFG;
+require_once($CFG->dirroot . '/local/mentor_core/api/entity.php');
+require_once($CFG->dirroot . '/local/mentor_core/api/profile.php');
+require_once($CFG->dirroot . '/local/mentor_core/classes/model/profile.php');
 require_once "$CFG->dirroot/local/categories_domains/classes/repository/categories_domains_repository.php";
 require_once "$CFG->dirroot/local/categories_domains/classes/model/domain_name.php";
 
@@ -947,4 +950,100 @@ class local_categories_domains_repository_testcase extends advanced_testcase
         $this->assertTrue(in_array($user2->id, array_column($getinvalidmainentity, 'id')));
         $this->assertFalse(in_array($user3->id, array_column($getinvalidmainentity, 'id')));
     }
+
+
+    /**
+     * Test linking categories to users with a secondary category.
+     *
+     * @covers \local_course_categories\categories_domains_service::link_categories_to_users
+     */
+    public function test_link_categories_to_users_with_secondary_category()
+    {
+        global $CFG;
+
+        $this::setAdminUser();
+
+        $CFG->allowemailaddresses = '.archi.fr .interieur.gouv.fr';
+        
+        $db = \local_mentor_core\database_interface::get_instance();
+        $categoryname1 = 'category1';    
+        $categoryid1 = \local_mentor_core\entity_api::create_entity(['name' => $categoryname1, 'shortname' => $categoryname1]);
+        $entity1 = $this->db->get_record('course_categories', ['id' => $categoryid1]);
+        $categoryname2 = 'category2';
+        $categoryid2 = \local_mentor_core\entity_api::create_entity(['name' => $categoryname2, 'shortname' => $categoryname2]);
+        $entity2 = $this->db->get_record('course_categories', ['id' => $categoryid2]);
+
+
+        $activeDomain1 = (object) [
+            'course_categories_id' => $categoryid1,
+            'domain_name' => '.archi.fr',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+
+        $activeDomain2 = (object) [
+            'course_categories_id' => $categoryid2,
+            'domain_name' => '.interieur.gouv.fr',
+            'created_at' => time(),
+            'disabled_at' => null
+        ];
+     
+        $this->db->insert_record('course_categories_domains', $activeDomain1, false);
+        $this->db->insert_record('course_categories_domains', $activeDomain2, false);
+
+        $user1 = $this->getDataGenerator()->create_user(['email' => 'user1@user.archi.fr']);
+        $user2 = $this->getDataGenerator()->create_user(['email' => 'user2@user.interieur.gouv.fr']);
+        $externalUser = $this->getDataGenerator()->create_user(['email' => 'userexternal@user.baddomain.fr']);
+        $user4 = $this->getDataGenerator()->create_user(['email' => 'user4@user.archi.fr']);
+
+        $user1 = $db->get_user_by_email('user1@user.archi.fr'); 
+        $user1->secondaryentities = '';
+        $user2 = $db->get_user_by_email('user2@user.interieur.gouv.fr');
+        $user2->secondaryentities = '';
+        $externalUser = $db->get_user_by_email('userexternal@user.baddomain.fr');
+        $externalUser->secondaryentities = '';
+        $user4 = $db->get_user_by_email('user4@user.archi.fr');
+        $user4->secondaryentities = '';
+        //Test case :
+            // Add user on main entity
+            // his mail is not attached to that entity
+        $this->categoriesdomainsservice->link_categories_to_users([$user1], $entity2);
+
+        $dbi = \local_mentor_core\database_interface::get_instance();
+        $secondaryentities = $dbi->get_profile_field_value($user1->id, 'secondaryentities');
+        self::assertEquals($categoryname2, $secondaryentities);
+
+        //Test case :
+            // Add user on main entity
+            // his mail is attached to that entity
+        $this->categoriesdomainsservice->link_categories_to_users([$user2], $entity2);
+
+        $dbi = \local_mentor_core\database_interface::get_instance();
+        $secondaryentities2 = $dbi->get_profile_field_value($user2->id, 'secondaryentities');
+        self::assertEquals("", $secondaryentities2);
+
+        //Test case :
+            // Add an external user on not main entity
+        $categoryname3 = 'category3';    
+        $categoryid3 = \local_mentor_core\entity_api::create_entity(['name' => $categoryname3, 'shortname' => $categoryname3]);
+        $entity3 = $this->db->get_record('course_categories', ['id' => $categoryid3]);
+        $dbinterface = \local_mentor_specialization\database_interface::get_instance();
+        $dbinterface->update_can_be_main_entity($categoryid3, 0);
+
+        $this->categoriesdomainsservice->link_categories_to_users([$externalUser], $entity3);
+
+        $dbi = \local_mentor_core\database_interface::get_instance();
+        $secondaryentities3 = $dbi->get_profile_field_value($externalUser->id, 'secondaryentities');
+        self::assertEquals($categoryname3, $secondaryentities3);
+
+        //Test case :
+            // Add a user on not main entity
+        $this->categoriesdomainsservice->link_categories_to_users([$user4], $entity3);
+
+        $dbi = \local_mentor_core\database_interface::get_instance();
+        $secondaryentities3 = $dbi->get_profile_field_value($user4->id, 'secondaryentities');
+        self::assertEquals($categoryname3, $secondaryentities3);
+
+    }
+
 }
