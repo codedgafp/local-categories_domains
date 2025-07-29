@@ -55,11 +55,11 @@ define([
                 oLanguage: {
                     sUrl: M.cfg.wwwroot + '/local/mentor_core/datatables/lang/' + M.util.get_string('langfile', 'local_categories_domains') + ".json"
                 },
-                columnDefs:  user_can_manage_domains ? [{
-                    orderable: false, 
-                    targets: 1 
+                columnDefs: user_can_manage_domains ? [{
+                    orderable: false,
+                    targets: 1
                 }] : [],
-                columns: user_can_manage_domains ? 
+                columns: user_can_manage_domains ?
                     [
                         { data: 'domain_name' },
                         {
@@ -76,9 +76,9 @@ define([
                         },
                     ] : [{ data: 'domain_name' }],
                 //To create header buttons
-                dom: 'Bfrtip',                
-                language: { search: ""},
-                search: {return: true},
+                dom: 'Bfrtip',
+                language: { search: "" },
+                search: { return: true },
                 //Header buttons
                 buttons: user_can_manage_domains ?
                     [{
@@ -90,17 +90,17 @@ define([
                         action: function () {
                             that.addDomainPopup();
                         }
-                }].concat(user_is_siteadmin ? [{
-                    text: M.util.get_string('import_csv_domain', 'local_categories_domains'),
-                    className: 'btn btn-primary',
-                    attr: {
-                        id: 'import_csv_domain',
-                    },
-                    action: function () {                           
-                        window.location.href = M.cfg.wwwroot + '/local/categories_domains/pages/importcsv.php?entityid='+entityid;                        
-                    }
-                }] : [])
-                : [],
+                    }].concat(user_is_siteadmin ? [{
+                        text: M.util.get_string('import_csv_domain', 'local_categories_domains'),
+                        className: 'btn btn-primary',
+                        attr: {
+                            id: 'import_csv_domain',
+                        },
+                        action: function () {
+                            window.location.href = M.cfg.wwwroot + '/local/categories_domains/pages/importcsv.php?entityid=' + entityid;
+                        }
+                    }] : [])
+                    : [],
                 initComplete: () => { addSearchButton("domains-table_filter") }
             });
         },
@@ -221,27 +221,25 @@ define([
             });
         },
 
-        triggerExportCSV: function(entityshortname, domains){
+        triggerExportCSV: function (entityshortname, domains) {
             $('#export_csv_domains').on('click', () => {
                 this.downloadCSVFile(entityshortname, domains);
-                });
+            });
         },
-        
-        downloadCSVFile: function(entityshortname, domains){
+
+        downloadCSVFile: function (entityshortname, domains) {
             var csv = '';
             var csvFile;
             var downloadLink;
-            
+
             // Add CSV Headers
             var headersString = M.util.get_string('headers_export_csv_domains', 'local_categories_domains');
-            var headers = headersString.split(';');
-            csv += headers.join(';') + '\n';
+            csv += headersString + "\n";
 
             // Add CSV data
             domains.forEach(domain => {
                 csv += domain.domain_name + ';' + (domain.idnumber || '') + '\n';
             });
-            
 
             var dateobject = new Date();
             var dateformat = dateobject.getFullYear() + '-' + ('0' + (dateobject.getMonth() + 1)).slice(-2) + '-' + ('0' + dateobject.getDate()).slice(-2);
@@ -249,7 +247,7 @@ define([
             var BOM = "\uFEFF";
             var csvData = BOM + csv;
 
-            csvFile = new Blob([csvData], {type: 'text/csv'});
+            csvFile = new Blob([csvData], { type: 'text/csv' });
             downloadLink = document.createElement("a");
             downloadLink.download = 'export_csv' + '_' + entityshortname + '_' + dateformat + '.csv';
             downloadLink.href = window.URL.createObjectURL(csvFile);
