@@ -638,4 +638,20 @@ class categories_domains_repository
             $this->db->get_records_sql($sql, $params)
         );
     }
+
+    public function get_active_domains_by_course_id(int $courseid): int
+    {
+        $sql = "SELECT COUNT(ccd.domain_name)
+                FROM {course_categories_domains} ccd
+                INNER JOIN {course} co
+                    ON co.id = :courseid
+                INNER JOIN {course_categories} mcc
+                    ON mcc.id = co.category
+                WHERE ccd.course_categories_id = mcc.id
+                    AND ccd.disabled_at IS NULL
+                ";
+        $params["courseid"] = $courseid;
+
+        return $this->db->count_records_sql($sql, $params);
+    }
 }
