@@ -210,31 +210,35 @@ class categories_domains_repository
      */
     public function update_users_course_category(string $categoryname, array $users): void
     {
+        global $CFG;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
         if (empty($users))
             return;
+        $batches = array_chunk($users, $batchSize);
+        foreach ($batches as $batch) {
+            [$whereclause, $batchParams] = $this->db->get_in_or_equal(
+                $batch,
+                SQL_PARAMS_NAMED,
+                'userid'
+            );
 
-        [$whereclause, $params] = $this->db->get_in_or_equal(
-            $users,
-            SQL_PARAMS_NAMED,
-            'userid'
-        );
-
-        $sql = "UPDATE {user_info_data}
-                SET data = :categoryname
-                WHERE userid $whereclause
-                AND fieldid = (
-                    SELECT id
-                    FROM {user_info_field}
-                    WHERE shortname = :fieldname
-                    LIMIT 1
-                )";
-        $params['categoryname'] = $categoryname;
-        $params['fieldname'] = 'mainentity';
-
-        try {
-            $this->db->execute($sql, $params);
-        } catch (\dml_exception $e) {
-            throw new \moodle_exception('errorupdatinguser', 'local_categories_domains', '', $e->getMessage());
+            $sql = "UPDATE {user_info_data}
+                    SET data = :categoryname
+                    WHERE userid $whereclause
+                    AND fieldid = (
+                        SELECT id
+                        FROM {user_info_field}
+                        WHERE shortname = :fieldname
+                        LIMIT 1
+                    )";
+            $params['categoryname'] = $categoryname;
+            $params['fieldname'] = 'mainentity';
+            $finalParams = array_merge($params, $batchParams);
+            try {
+                $this->db->execute($sql, $finalParams);
+            } catch (\dml_exception $e) {
+                throw new \moodle_exception('errorupdatinguser', 'local_categories_domains', '', $e->getMessage());
+            }
         }
     }
 
@@ -334,31 +338,31 @@ class categories_domains_repository
      */
     public function get_users_missmatch_categories(array $userstoupdate, array $categories)
     {
-        [$whereusers, $paramsusers] = $this->db->get_in_or_equal(
-            $userstoupdate,
-            SQL_PARAMS_NAMED,
-            'userid'
-        );
-
-        [$wherecategories, $paramscategories] = $this->db->get_in_or_equal(
-            $categories,
-            SQL_PARAMS_NAMED,
-            'mainentityid',
-            false
-        );
-
-        $sql = "SELECT u.id
-                FROM {user} u
-                INNER JOIN {user_info_data} uid ON uid.userid = u.id
-                INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
-                WHERE u.id $whereusers
-                AND uid.data $wherecategories
+        global $CFG;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $results = [];
+        $userBatches = array_chunk($userstoupdate, $batchSize);
+        foreach ($userBatches as $userBatch) {
+            [$whereUsers, $paramsUsers] = $this->db->get_in_or_equal($userBatch, SQL_PARAMS_NAMED, 'userid');
+            
+            $categoryBatches = array_chunk($categories, $batchSize);
+            foreach ($categoryBatches as $categoryBatch) {
+                [$whereCategories, $paramsCategories] = $this->db->get_in_or_equal($categoryBatch, SQL_PARAMS_NAMED, 'mainentityid', false);
+                $sql = "
+                    SELECT u.id
+                    FROM {user} u
+                    INNER JOIN {user_info_data} uid ON uid.userid = u.id
+                    INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
+                    WHERE u.id $whereUsers
+                    AND uid.data $whereCategories
                 ";
-        $params["fieldname"] = 'mainentity';
-
-        $params = array_merge($paramsusers, $paramscategories, $params);
-
-        return $this->db->get_records_sql($sql, $params);
+                $params['fieldname'] = 'mainentity';
+                $finalParams = array_merge($params, $paramsUsers, $paramsCategories);
+                $batchResults = $this->db->get_records_sql($sql, $finalParams);
+                $results = array_merge($results, $batchResults);
+            }
+        }
+        return $results;
     }
 
     /**
@@ -369,30 +373,19 @@ class categories_domains_repository
      */
     public function get_only_users_no_info_field_mainentity_data(array $usersid): array
     {
-        [$whereclause, $params] = $this->db->get_in_or_equal(
-            $usersid,
-            SQL_PARAMS_NAMED,
-            'userid'
-        );
-
-        $sql = "SELECT DISTINCT(u.id)
+        global $CFG;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $sql = "
+                SELECT DISTINCT(u.id)
                 FROM {user} u
                 INNER JOIN {user_info_data} uid ON uid.userid = u.id
                 INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
-                WHERE u.id $whereclause
-                ";
-
-        $params['fieldname'] = 'mainentity';
-
-        $result = array_map(
-            fn($user): int => $user->id,
-            $this->db->get_records_sql(
-                $sql,
-                $params
-            )
-        );
-
-        return array_diff($usersid, $result);
+                WHERE u.id :userid
+            ";
+        $params = ['fieldname' => 'mainentity'];
+        $results = $this->execute_with_batches($sql, $params, $usersid, 'userid', $batchSize);
+        $resultIds = array_map(fn($user) => $user->id, $results);
+        return array_diff($usersid, $resultIds);
     }
 
     /**
@@ -403,31 +396,21 @@ class categories_domains_repository
      */
     public function get_only_users_no_info_data_mainentity(array $usersid): array
     {
-        [$whereclause, $params] = $this->db->get_in_or_equal(
-            $usersid,
-            SQL_PARAMS_NAMED,
-            'userid'
-        );
-
+        global $CFG;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
         $sql = "SELECT DISTINCT(u.id)
                 FROM {user} u
                 INNER JOIN {user_info_data} uid ON uid.userid = u.id
                 INNER JOIN {user_info_field} uif ON uif.id = uid.fieldid AND uif.shortname = :fieldname
-                WHERE u.id $whereclause
+                WHERE u.id :userid
                 AND uid.data IS NOT NULL AND uid.data <> ''
                 ";
 
-        $params['fieldname'] = 'mainentity';
-
-        $result = array_map(
-            fn($user): int => $user->id,
-            $this->db->get_records_sql(
-                $sql,
-                $params
-            )
-        );
-
-        return array_diff($usersid, $result);
+         $params = ['fieldname' => 'mainentity'];
+        $results = $this->execute_with_batches($sql, $params, $usersid, 'userid', $batchSize);
+        $resultIds = array_map(fn($user) => $user->id, $results);
+        
+        return array_diff($usersid, $resultIds);
     }
 
     /**
@@ -438,28 +421,30 @@ class categories_domains_repository
      */
     public function insert_user_info_data_main_entity(array $users): void
     {
+        global $CFG;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        if (empty($users)) {
+        return;
+        }
         $mainentityfield = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
 
-        $params = [];
-
-        $valuesclause = implode(
-            ", ",
-            array_map(function ($index, $userid) use (&$params, $mainentityfield): string {
+        $batches = array_chunk($users, $batchSize);
+        foreach ($batches as $batch) {
+            $params = [];
+            $values = [];
+            foreach ($batch as $index => $userid) {
                 $paramsuser = "userid$index";
                 $paramsfield = "mainentityfield$index";
-
                 $params[$paramsuser] = $userid;
                 $params[$paramsfield] = $mainentityfield->id;
+                $values[] = "(:$paramsuser, :$paramsfield, '', 0)";
+            }
+            $sql = "INSERT INTO {user_info_data} (userid, fieldid, data, dataformat)
+                VALUES " .implode(", ", $values);
 
-                return "(:$paramsuser, :$paramsfield, '', 0)";
-            }, array_keys($users), $users)
-        );
-
-        $sql = "INSERT INTO {user_info_data} (userid, fieldid, data, dataformat)
-                VALUES $valuesclause
-                ";
-
-        $this->db->execute($sql, $params);
+            $this->db->execute($sql, $params);
+        }
+        
     }
 
     /**
@@ -653,5 +638,43 @@ class categories_domains_repository
         $params["courseid"] = $courseid;
 
         return $this->db->count_records_sql($sql, $params);
+    }
+
+        
+    /**
+     * Executes an SQL query by splitting the IDs into batches to avoid parameter limits.
+     *
+     * @param string $sqlBase Base SQL query (with a placeholder for the WHERE IN clause)
+     * @param array $params Query parameters (excluding the IDs)
+     * @param array $ids List of IDs to process
+     * @param string $paramName Name of the parameter for the IDs (e.g., 'userid')
+     * @param int $batchSize Batch size (default is 1000)
+     * @param string $placeholder Placeholder to be replaced by the WHERE IN clause (e.g., ':userid')
+     * @return array Query results
+     */
+
+    protected function execute_with_batches(
+    string $sqlBase,
+    array $params,
+    array $ids,
+    string $paramName,
+    int $batchSize = 1000
+    ): array {
+        $result = [];
+        $batches = array_chunk($ids, $batchSize);
+        $placeholder = ":$paramName";
+        
+
+        foreach ($batches as $batch) {
+            [$whereClause, $batchParams] = $this->db->get_in_or_equal($batch, SQL_PARAMS_NAMED, $paramName);
+            $sql = str_replace($placeholder, $whereClause, $sqlBase);
+
+            $finalParams = array_merge($params, $batchParams);
+
+            $batchResult = $this->db->get_records_sql($sql, $finalParams);
+            $result = array_merge($result, $batchResult);
+        }
+
+        return $result;
     }
 }

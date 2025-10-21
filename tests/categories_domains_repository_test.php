@@ -1046,4 +1046,132 @@ class local_categories_domains_repository_testcase extends advanced_testcase
 
     }
 
+    /**
+     * Test get_only_users_no_info_field_mainentity_data with users having and not having the mainentity field.
+     * 
+     */
+    public function test_get_only_users_no_info_field_mainentity_data()
+    {
+
+        $userWithField = $this->getDataGenerator()->create_user();
+        $userWithoutField = $this->getDataGenerator()->create_user();
+        $field = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
+        
+        $this->db->delete_records('user_info_data', ['userid' => $userWithoutField->id, 'fieldid' => $field->id]);
+
+        $usersId = [$userWithField->id, $userWithoutField->id];
+
+        $result = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data($usersId);
+
+        $this->assertCount(1, $result,  "Le nombre d'utilisateurs retournés n'est pas celui attendu.");
+        $this->assertEquals($userWithoutField->id, reset($result), "L'ID de l'utilisateur retourné n'est pas celui attendu.");
+    }
+
+    /**
+     * Test get_only_users_no_info_field_mainentity_data with empty input.
+     */
+    public function test_get_only_users_no_info_field_mainentity_data_empty_input()
+    {
+        $result = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data([]);
+        $this->assertEmpty($result);
+    }
+
+    /**
+     * Test get_only_users_no_info_field_mainentity_data with no users having the field.
+     *
+     * @throws dml_exception
+     */
+    public function test_get_only_users_no_info_field_mainentity_data_no_users_with_field()
+    {
+       
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+
+        $field = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
+        
+        $this->db->delete_records('user_info_data', ['userid' => $user1->id, 'fieldid' => $field->id]);
+        $this->db->delete_records('user_info_data', ['userid' => $user2->id, 'fieldid' => $field->id]);
+
+        $usersId = [$user1->id, $user2->id];
+        $result = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data($usersId);
+
+        $this->assertCount(2, $result);
+        $this->assertContains($user1->id, $result);
+        $this->assertContains($user2->id, $result);
+    }
+
+
+    /**
+     * Test get_only_users_no_info_data_mainentity with users having and not having data for mainentity.
+     *
+     * @throws dml_exception
+     */
+    public function test_get_only_users_no_info_data_mainentity_with_data()
+    {
+        $userWithData = $this->getDataGenerator()->create_user();
+        $userWithoutData = $this->getDataGenerator()->create_user();
+
+        $field = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
+        $this->db->delete_records('user_info_data', ['userid' => $userWithoutData->id, 'fieldid' => $field->id]);
+       
+        $emptyUserInfoData = (object)[
+            'userid' => $userWithoutData->id,
+            'fieldid' => $field->id,
+            'data' => '', 
+        ];
+        $this->db->insert_record('user_info_data', $emptyUserInfoData);
+
+        $usersId = [$userWithData->id, $userWithoutData->id];
+        $result = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity($usersId);
+
+        $this->assertCount(1, $result);
+        $this->assertEquals($userWithoutData->id, reset($result));
+    }
+
+    /**
+     * Test get_only_users_no_info_data_mainentity with empty input.
+     */
+    public function test_get_only_users_no_info_data_mainentity_empty_input()
+    {
+        $result = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity([]);
+        $this->assertEmpty($result);
+    }
+
+    /**
+     * Test get_only_users_no_info_data_mainentity with no users having non-empty data.
+     *
+     * @throws dml_exception
+     */
+    public function test_get_only_users_no_info_data_mainentity_no_users_with_data()
+    {
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        
+        $field = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
+        
+        $this->db->delete_records('user_info_data', ['userid' => $user1->id, 'fieldid' => $field->id]);
+        $this->db->delete_records('user_info_data', ['userid' => $user2->id, 'fieldid' => $field->id]);
+
+
+        $userInfoData1 = (object)[
+            'userid' => $user1->id,
+            'fieldid' => $field->id,
+            'data' => '',
+        ];
+        $userInfoData2 = (object)[
+            'userid' => $user2->id,
+            'fieldid' => $field->id,
+            'data' => '',
+        ];
+        $this->db->insert_record('user_info_data', $userInfoData1);
+        $this->db->insert_record('user_info_data', $userInfoData2);
+
+        $usersId = [$user1->id, $user2->id];
+        $result = $this->categoriesdomainsrepository->get_only_users_no_info_data_mainentity($usersId);
+
+        $this->assertCount(2, $result);
+        $this->assertContains($user1->id, $result);
+        $this->assertContains($user2->id, $result);
+    }
+
 }
