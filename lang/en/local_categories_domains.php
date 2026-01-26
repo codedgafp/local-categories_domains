@@ -49,3 +49,7 @@ $string['domainsimported'] = 'Import effectué';
 
 // Export CSV
 $string['headers_export_csv_domains'] = 'domain_name;idnumber';
+
+## Events
+$string['usersmainentityupdated'] = 'Mise à jour de l\'entité principale des utilisateurs';
+$string['usersecondaryentitiesupdated'] = 'Mise à jour des entités secondaires de l\'utilisateur';
