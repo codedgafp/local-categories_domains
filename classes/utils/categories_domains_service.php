@@ -42,17 +42,17 @@ class categories_domains_service
 
         $domainsdata = array_unique(array_map([$this, 'get_domains_data'], $users), SORT_REGULAR);
 
-        $userstocohort = [];
+        $useridstocohort = [];
 
         if ($category) {
             $mentorentity = new mentor_entity($category->id);
         }
 
         foreach ($domainsdata as $domain) {
-            $userstoupdate = $this->get_users_to_update($users, $domain['domainname']);
-            $userstocohort = array_merge($userstoupdate, $userstocohort);
+            $useridstoupdate = $this->get_users_to_update($users, $domain['domainname']);
+            $useridstocohort = array_merge($useridstoupdate, $useridstocohort);
 
-            $usersnomainentityfield = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data($userstoupdate);
+            $usersnomainentityfield = $this->categoriesdomainsrepository->get_only_users_no_info_field_mainentity_data($useridstoupdate);
             if ($usersnomainentityfield) {
                 $this->categoriesdomainsrepository->insert_user_info_data_main_entity($usersnomainentityfield);
             }
@@ -66,44 +66,52 @@ class categories_domains_service
                 }
                 // RG01-MEN-474
 
-                $this->manage_users_external_role($userstoupdate, true);
-                $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $userstoupdate);
+                $this->manage_users_external_role($useridstoupdate, true);
+                $this->categoriesdomainsrepository->update_users_course_category($categorytoset->name, $useridstoupdate);
 
                 continue;
             }
 
-            $this->manage_users_external_role($userstoupdate, false);
+            $this->manage_users_external_role($useridstoupdate, false);
 
             $categoriesbydomain = $this->categoriesdomainsrepository->get_course_categories_by_domain($domain['domainname'], $defaultcategory);
 
             if (count($categoriesbydomain) > 1) {
                 $categoriesname = array_map(fn($category): string => $category->name, $categoriesbydomain);
 
-                $userstoupdatearray = $this->categoriesdomainsrepository->get_users_missmatch_categories($userstoupdate, $categoriesname);
+                $useridstoupdatearray = $this->categoriesdomainsrepository->get_users_missmatch_categories($useridstoupdate, $categoriesname);
 
-                if ($userstoupdatearray) {
-                    $userstoupdate = array_map(fn($user): string => $user->id, $userstoupdatearray);
+                if ($useridstoupdatearray) {
+                    $useridstoupdate = array_map(fn($user): string => $user->id, $useridstoupdatearray);
 
                     $emptycoursecategory = new \stdClass();
                     $emptycoursecategory->name = "";
-                    $this->categoriesdomainsrepository->update_users_course_category($emptycoursecategory->name, $userstoupdate);
+                    $this->categoriesdomainsrepository->update_users_course_category($emptycoursecategory->name, $useridstoupdate);
                 }
 
                 continue;
             }
 
             $categoryname = reset($categoriesbydomain)->name;
-            $this->categoriesdomainsrepository->update_users_course_category($categoryname, $userstoupdate);
+            $this->categoriesdomainsrepository->update_users_course_category($categoryname, $useridstoupdate);
         }
-        
-        foreach ($userstocohort as $user) {
-            $profile = profile_api::get_profile($user);
-        
+
+        foreach ($useridstocohort as $userid) {
+            $profile = profile_api::get_profile($userid);
+
             //Set secondary entity for user
             if ($category) {
                 $profilemainentity = ($profile->get_main_entity() !== false && $profile->get_main_entity() !== null) ? $profile->get_main_entity()->id : null;
-                $secondaryentities = $this->set_secondary_entities($mentorentity, $profilemainentity);
-                $profile->set_profile_field('secondaryentities', implode(',', $secondaryentities));
+                $secondaryentities = implode(',', $this->set_secondary_entities($mentorentity, $profilemainentity));
+                $profile->set_profile_field('secondaryentities', $secondaryentities);
+                \local_categories_domains\event\user_secondaryentities_updated::create([
+                    'context' => \context_system::instance(),
+                    'other' => [
+                        'entitynames' => $secondaryentities,
+                        'userid'      => $userid,
+                        'field'        => 'mainentity'
+                    ]
+                ])->trigger();
             }
             $profile->sync_entities();
         }
@@ -196,13 +204,13 @@ class categories_domains_service
         // RG03-MEN-474
     }
 
-    private function set_secondary_entities($entity = null, int $user_main_entity = null) : array
+    private function set_secondary_entities($entity = null, int $user_main_entity = null): array
     {
         $secondaryentity = [];
         if ($entity && (($entity->can_be_main_entity() && $user_main_entity != $entity->id) || (!$entity->can_be_main_entity()))) {
             $secondaryentity = [$entity->name];
         }
 
-    return $secondaryentity;
-}
+        return $secondaryentity;
+    }
 }

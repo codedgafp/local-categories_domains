@@ -211,7 +211,7 @@ class categories_domains_repository
     public function update_users_course_category(string $categoryname, array $users): void
     {
         global $CFG;
-        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000;
         if (empty($users))
             return;
         $batches = array_chunk($users, $batchSize);
@@ -236,6 +236,14 @@ class categories_domains_repository
             $finalParams = array_merge($params, $batchParams);
             try {
                 $this->db->execute($sql, $finalParams);
+                \local_categories_domains\event\users_mainentity_updated::create([
+                    'context' => \context_system::instance(),
+                    'other' => [
+                        'entityname' => $categoryname,
+                        'userids'      => $batch,
+                        'field'        => 'mainentity'
+                    ]
+                ])->trigger();
             } catch (\dml_exception $e) {
                 throw new \moodle_exception('errorupdatinguser', 'local_categories_domains', '', $e->getMessage());
             }
@@ -339,12 +347,12 @@ class categories_domains_repository
     public function get_users_missmatch_categories(array $userstoupdate, array $categories)
     {
         global $CFG;
-        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000;
         $results = [];
         $userBatches = array_chunk($userstoupdate, $batchSize);
         foreach ($userBatches as $userBatch) {
             [$whereUsers, $paramsUsers] = $this->db->get_in_or_equal($userBatch, SQL_PARAMS_NAMED, 'userid');
-            
+
             $categoryBatches = array_chunk($categories, $batchSize);
             foreach ($categoryBatches as $categoryBatch) {
                 [$whereCategories, $paramsCategories] = $this->db->get_in_or_equal($categoryBatch, SQL_PARAMS_NAMED, 'mainentityid', false);
@@ -374,7 +382,7 @@ class categories_domains_repository
     public function get_only_users_no_info_field_mainentity_data(array $usersid): array
     {
         global $CFG;
-        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000;
         $sql = "
                 SELECT DISTINCT(u.id)
                 FROM {user} u
@@ -397,7 +405,7 @@ class categories_domains_repository
     public function get_only_users_no_info_data_mainentity(array $usersid): array
     {
         global $CFG;
-        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000;
         $sql = "SELECT DISTINCT(u.id)
                 FROM {user} u
                 INNER JOIN {user_info_data} uid ON uid.userid = u.id
@@ -406,10 +414,10 @@ class categories_domains_repository
                 AND uid.data IS NOT NULL AND uid.data <> ''
                 ";
 
-         $params = ['fieldname' => 'mainentity'];
+        $params = ['fieldname' => 'mainentity'];
         $results = $this->execute_with_batches($sql, $params, $usersid, 'userid', $batchSize);
         $resultIds = array_map(fn($user) => $user->id, $results);
-        
+
         return array_diff($usersid, $resultIds);
     }
 
@@ -422,9 +430,9 @@ class categories_domains_repository
     public function insert_user_info_data_main_entity(array $users): void
     {
         global $CFG;
-        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000 ;
+        $batchSize = isset($CFG->batch_size) ? $CFG->batch_size : 1000;
         if (empty($users)) {
-        return;
+            return;
         }
         $mainentityfield = $this->db->get_record('user_info_field', ['shortname' => 'mainentity']);
 
@@ -440,11 +448,10 @@ class categories_domains_repository
                 $values[] = "(:$paramsuser, :$paramsfield, '', 0)";
             }
             $sql = "INSERT INTO {user_info_data} (userid, fieldid, data, dataformat)
-                VALUES " .implode(", ", $values);
+                VALUES " . implode(", ", $values);
 
             $this->db->execute($sql, $params);
         }
-        
     }
 
     /**
@@ -640,7 +647,7 @@ class categories_domains_repository
         return $this->db->count_records_sql($sql, $params);
     }
 
-        
+
     /**
      * Executes an SQL query by splitting the IDs into batches to avoid parameter limits.
      *
@@ -654,16 +661,16 @@ class categories_domains_repository
      */
 
     protected function execute_with_batches(
-    string $sqlBase,
-    array $params,
-    array $ids,
-    string $paramName,
-    int $batchSize = 1000
+        string $sqlBase,
+        array $params,
+        array $ids,
+        string $paramName,
+        int $batchSize = 1000
     ): array {
         $result = [];
         $batches = array_chunk($ids, $batchSize);
         $placeholder = ":$paramName";
-        
+
 
         foreach ($batches as $batch) {
             [$whereClause, $batchParams] = $this->db->get_in_or_equal($batch, SQL_PARAMS_NAMED, $paramName);
