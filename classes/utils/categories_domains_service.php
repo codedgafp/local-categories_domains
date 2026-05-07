@@ -185,16 +185,8 @@ class categories_domains_service
      */
     private function manage_users_external_role(array &$userstoupdate, bool $setexternalrole)
     {
-        $mentorcoredbi = database_interface::get_instance();
-        $externalrole = $this->db->get_record('role', ['shortname' => 'utilisateurexterne']);
-
         foreach ($userstoupdate as $userid) {
             toggle_external_user_role($userid, $setexternalrole);
-
-            $isexternal = $this->db->get_records('role_assignments', ['userid' => $userid, 'roleid' => $externalrole->id]);
-            if ($isexternal && $setexternalrole) {
-                $mentorcoredbi->set_profile_field_value($userid, 'roleMentor', $externalrole->shortname);
-            }
         }
 
         // RG03-MEN-474
